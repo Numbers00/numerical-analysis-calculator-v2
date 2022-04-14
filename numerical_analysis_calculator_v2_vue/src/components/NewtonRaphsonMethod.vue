@@ -223,15 +223,17 @@ export default {
       this.solution.push(`NM(f(x), f'(x), Xo, Ɛ, 𝛿, maxiter) -> NM(${correctedEq}, ${derivEq}, ${initialGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
       this.solution.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
       this.solution.push(`X1 <- ${xPrev} - (${func(xPrev)} / ${derivFunc(xPrev)})`);
+      this.solution.push(`X1 = ${xCurr}`);
 
       let iter = 2;
 
       do {
-        this.solution.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-        this.solution.push(`X${iter} <- ${xPrev} - (${func(xPrev)} / ${derivFunc(xPrev)})`);
-
         xPrev = xCurr;
         xCurr = xPrev - (func(xPrev) / derivFunc(xPrev));
+
+        this.solution.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
+        this.solution.push(`X${iter} <- ${xPrev} - (${func(xPrev)} / ${derivFunc(xPrev)})`);
+        this.solution.push(`X${iter} = ${xCurr}`);
 
         if (func(xCurr) === 0) {
           this.solution.push(`${xCurr} is the exact solution`);
@@ -267,8 +269,8 @@ export default {
       }
 
       xCurr = parseFloat(xCurr.toFixed(correctDigits));
-      this.solution.push(`X${iter-1} ${xCurr} is our estimate`);
-      this.answer = `X${iter-1} ${xCurr} is our estimate`;
+      this.solution.push(`X${iter-1} = ${xCurr} is our estimate`);
+      this.answer = `X${iter-1} = ${xCurr} is our estimate`;
 
       this.handleEstimates();
     },
