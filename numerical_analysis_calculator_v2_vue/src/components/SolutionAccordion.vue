@@ -76,22 +76,20 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.accordion {
-  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-  transition: 0.3s;
-  border: 2px solid #c3cfd9;
-}
 
 .accordion-item {
-  background-color: #fefffe;
+  border: none;
 }
 
 .accordion-button {
+  border: 2px solid #c3cfd9;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;
   background-color: #f7f8fb;
   color: black;
 
-  &:nth-child(1) {
-    border-bottom: 2px solid #c3cfd9;
-  }
+  // &:nth-child(1) {
+  //   border-bottom: 2px solid #c3cfd9;
+  // }
 }
 </style>
