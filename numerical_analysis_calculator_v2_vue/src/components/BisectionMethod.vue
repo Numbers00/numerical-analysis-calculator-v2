@@ -14,7 +14,7 @@
           >
             <option value="bisectionMethod" selected>Bisection Method</option>
             <option value="falsePositionMethod">False Position Method</option>
-            <option value="newtonsMethod">Newton's Method</option>
+            <option value="newtonRaphsonMethod">Newton Raphson Method</option>
             <option value="secantMethod">Secant Method</option>
             <option value="MOSS">Method of Successive Substitution</option>
           </select>

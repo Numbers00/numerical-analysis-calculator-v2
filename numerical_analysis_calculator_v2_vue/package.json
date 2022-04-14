@@ -8,9 +8,10 @@
   },
   "dependencies": {
     "core-js": "^3.8.3",
-    "uuid": "^8.3.2",
+    "nerdamer": "^1.1.13",
     "vue": "^3.2.13",
     "vue-router": "^4.0.3",
+    "vue-uuid": "^3.0.0",
     "vuex": "^4.0.0"
   },
   "devDependencies": {

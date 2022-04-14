@@ -23,7 +23,7 @@
         <template v-for="(line, index) in printSolution">
           <p 
             v-if="line.includes('iter') || (!line.includes('Please') && index === printSolution.length - 1)" 
-            :key="index.v4" 
+            :key="index.uuid" 
             class="lead fw-bold"
           >
           {{line}}
@@ -37,7 +37,8 @@
 </template>
 
 <script>
-import { v4 as uuidv4 } from 'uuid';
+import { uuid } from 'vue-uuid';
+import nerdamer from 'nerdamer';
 
 export default {
   name: 'SolutionAccordion',
@@ -46,6 +47,9 @@ export default {
     answer: String
   },
   data () {
+    return {
+      uuid: uuid.v4()
+    }
   },
   computed: {
     printSolution () {
@@ -56,6 +60,17 @@ export default {
       if (this.answer === '') return 'Please click "solve" to start displaying the answer';
       else return this.answer;
     }
+  },
+  mounted () {
+    //let ans = nerdamer.expand('(x-1)^5');
+    //console.log(ans.text());
+    //Derivative of x^2
+    let result = nerdamer('diff(x^2,x)').evaluate();
+    console.log(result.text());
+    //Build a new function
+    let f = result.buildFunction();
+    //Evalute f'(3)
+    console.log(f(3).toString());
   }
 }
 </script>

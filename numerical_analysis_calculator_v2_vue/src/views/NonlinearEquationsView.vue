@@ -17,6 +17,11 @@
       @change-num-method="changeNumMethod"
       @handle-estimates="handleEstimates"
     />
+    <newton-raphson-method
+      v-if="numMethod === 'newtonRaphsonMethod'"
+      @change-num-method="changeNumMethod"
+      @handle-estimates="handleEstimates"
+    />
   </div>
 </div>
 </template>
@@ -24,7 +29,8 @@
 <script>
 import SolutionAccordion from '@/components/SolutionAccordion.vue';
 import BisectionMethod from '@/components/BisectionMethod.vue';
-import FalsePositionMethod from '../components/FalsePositionMethod.vue';
+import FalsePositionMethod from '@/components/FalsePositionMethod.vue';
+import NewtonRaphsonMethod from '@/components/NewtonRaphsonMethod.vue';
 
 export default {
   name: 'NonlinearEquationsView',
@@ -38,7 +44,8 @@ export default {
   components: {
     SolutionAccordion,
     BisectionMethod,
-    FalsePositionMethod
+    FalsePositionMethod,
+    NewtonRaphsonMethod
   },
   methods: {
     changeNumMethod (numMethod) {
