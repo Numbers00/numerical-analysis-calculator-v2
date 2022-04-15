@@ -2,6 +2,8 @@
 <div class="container-fluid row d-flex justify-content-between px-0 mx-0">
   <div class="col-lg-6 rounded ps-0">
     <solution-accordion 
+      :estimates="estimates"
+      :summary="summary"
       :solution="solution"
       :answer="answer"
     />
@@ -37,6 +39,8 @@ export default {
   data () {
     return {
       numMethod: 'bisectionMethod',
+      estimates: [],
+      summary: [],
       solution: [],
       answer: ''
     }
@@ -52,6 +56,8 @@ export default {
       this.numMethod = numMethod;
     },
     handleEstimates (estimates) {
+      this.estimates = estimates.estimates;
+      this.summary = estimates.summary;
       this.solution = estimates.solution;
       this.answer = estimates.answer;
     }

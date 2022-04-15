@@ -148,6 +148,8 @@ export default {
       maxiter: 100,
       correctDigits: 4,
       slopeThreshold: 0.0001,
+      estimates: [],
+      summary: [],
       solution: [],
       answer: ''
     }
@@ -225,6 +227,13 @@ export default {
       let xPrev = initialGuess;
       let xCurr = shortenDecimal(xPrev - (shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev))));
 
+      this.estimates.push(`X1 = ${xCurr}`);
+
+      this.summary.push(`NM(f(x), f'(x), Xo, Ɛ, 𝛿, maxiter) -> NM(${this.toPrintEq}, ${derivEq}, ${initialGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
+      this.summary.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
+      this.summary.push(`X1 <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
+      this.summary.push(`X1 = ${xCurr}`);
+
       this.solution.push(`NM(f(x), f'(x), Xo, Ɛ, 𝛿, maxiter) -> NM(${this.toPrintEq}, ${derivEq}, ${initialGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
       this.solution.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
       this.solution.push(`X1 <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
@@ -236,6 +245,12 @@ export default {
       do {
         xPrev = xCurr;
         xCurr = shortenDecimal(xPrev - (shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev))));
+        
+        this.estimates.push(`X${iter} = ${xCurr}`);
+
+        this.summary.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
+        this.summary.push(`X${iter} <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
+        this.summary.push(`X${iter} = ${xCurr}`);
 
         this.solution.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
         this.solution.push(`X${iter} <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
@@ -243,6 +258,10 @@ export default {
         this.solution.push(`X${iter} = ${xCurr}`);
 
         if (func(xCurr) === 0) {
+          this.estimates.push(`${xCurr} is the exact solution`);
+
+          this.summary.push(`${xCurr} is the exact solution`);
+
           this.solution.push(`${xCurr} is the exact solution`);
           this.answer = `${xCurr} is the exact solution`;
 
@@ -255,6 +274,10 @@ export default {
           //   this.randomizeGuess();
           //   this.handleCalculate();
           // }
+          this.estimate.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
+
+          this.summary.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
+
           this.solution.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
           return; 
         }
@@ -267,7 +290,10 @@ export default {
         //   this.randomizeGuess();
         //   this.handleCalculate();
         // }
-        xCurr = shortenDecimal(xCurr);
+        this.estimates.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
+
+        this.summary.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
+
         this.solution.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
         this.answer = `the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`;
         
@@ -275,14 +301,17 @@ export default {
         return;
       }
 
-      xCurr = shortenDecimal(xCurr);
+      this.estimates.push(`X${iter-1} = ${xCurr} is our estimate`);
+
+      this.summary.push(`X${iter-1} = ${xCurr} is our estimate`);
+
       this.solution.push(`X${iter-1} = ${xCurr} is our estimate`);
       this.answer = `X${iter-1} = ${xCurr} is our estimate`;
 
       this.handleEstimates();
     },
     handleEstimates () {
-      this.$emit('handle-estimates', {'solution':this.solution, 'answer':this.answer});
+      this.$emit('handle-estimates', {'estimates':this.estimates, 'summary':this.summary, 'solution':this.solution, 'answer':this.answer});
     }
   },
   watch: {

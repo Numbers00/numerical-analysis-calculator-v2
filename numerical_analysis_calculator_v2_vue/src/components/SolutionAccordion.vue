@@ -15,10 +15,43 @@
   <div class="accordion-item">
     <h2 class="accordion-header" id="headingTwo">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+        Calculated Estimates
+      </button>
+    </h2>
+    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#helperAccordion">
+      <div class="accordion-body text-start">
+        <p v-for="(line, index) in printEstimates" :key="index.uuid">{{line}}</p>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingThree">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+        Summarized Solution
+      </button>
+    </h2>
+    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#helperAccordion">
+      <div class="accordion-body text-start">
+        <template v-for="(line, index) in printSummary">
+          <p 
+            v-if="line.includes('=')" 
+            :key="index.uuid" 
+            class="lead fw-bold"
+          >
+          {{line}}
+          </p>
+          <p v-else :key="index.uuid">{{line}}</p>
+        </template>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingFour">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
         Complete Solution
       </button>
     </h2>
-    <div id="collapseTwo" class="accordion-collapse collapse show" aria-labelledby="headingTwo" data-bs-parent="#helperAccordion">
+    <div id="collapseFour" class="accordion-collapse collapse show" aria-labelledby="headingFour" data-bs-parent="#helperAccordion">
       <div class="accordion-body text-start">
         <template v-for="(line, index) in printSolution">
           <p 
@@ -38,11 +71,12 @@
 
 <script>
 import { uuid } from 'vue-uuid';
-import nerdamer from 'nerdamer';
 
 export default {
   name: 'SolutionAccordion',
   props: {
+    estimates: Array,
+    summary: Array,
     solution: Array,
     answer: String
   },
@@ -52,6 +86,14 @@ export default {
     }
   },
   computed: {
+    printEstimates () {
+      if (this.estimates.length === 0) return ['Please click "solve" to start displaying the estimates'];
+      else return this.estimates;
+    },
+    printSummary () {
+      if (this.summary.length === 0) return ['Please click "solve" to start displaying the summary'];
+      else return this.summary;
+    },
     printSolution () {
       if (this.solution.length === 0) return ['Please click "solve" to start displaying the solution'];
       else return this.solution;
@@ -60,17 +102,6 @@ export default {
       if (this.answer === '') return 'Please click "solve" to start displaying the answer';
       else return this.answer;
     }
-  },
-  mounted () {
-    //let ans = nerdamer.expand('(x-1)^5');
-    //console.log(ans.text());
-    //Derivative of x^2
-    let result = nerdamer('diff(x^2,x)').evaluate();
-    console.log(result.text());
-    //Build a new function
-    let f = result.buildFunction();
-    //Evalute f'(3)
-    console.log(f(3).toString());
   }
 }
 </script>

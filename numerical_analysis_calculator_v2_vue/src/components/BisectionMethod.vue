@@ -145,13 +145,15 @@ export default {
   },
   data () {
     return {
-      numMethod: 'falsePositionMethod',
+      numMethod: 'bisectionMethod',
       equation: '',
       randomBounds: false,
       startingBound: 1,
       endingBound: 3,
       maxiter: 100,
       correctDigits: 4,
+      estimates: [],
+      summary: [],
       solution: [],
       answer: '',
       calculating: false,
@@ -226,6 +228,8 @@ export default {
     handleCalculate () {
       this.prevCorrectDigits = this.correctDigits;
 
+      this.estimates = [];
+      this.summary = [];
       this.solution = [];
       this.answer = '';
 
@@ -237,6 +241,8 @@ export default {
         try {
           this.randomizeBounds();
         } catch (e) {
+          this.estimates.push('Could not find eligible bounds for this equation, but you can try manually inputting random bounds');
+          this.summary.push('Could not find eligible bounds for this equation, but you can try manually inputting random bounds');
           this.solution.push('Could not find eligible bounds for this equation, but you can try manually inputting random bounds');
           this.answer = 'Could not find eligible bounds for this equation, but you can try manually inputting random bounds';
           this.handleEstimates();
@@ -244,6 +250,8 @@ export default {
         }
       } else {
         if (func(this.startingBound) * func(this.endingBound) >= 0) {
+          this.estimates.push(`f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`);
+          this.summary.push(`f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`);
           this.solution.push(`f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`);
           this.handleEstimates();
           return;
@@ -253,6 +261,12 @@ export default {
       let a = this.startingBound;
       let b = this.endingBound;
       xCurr = shortenDecimal(shortenDecimal(a + b) / 2);
+
+      this.estimates.push(`X1 = ${xCurr}`);
+
+      this.summary.push(`BM(f(x), [a, b], Ɛ) -> BM(${this.toPrintEq}, [${a}, ${b}], ${this.errorTolerance})`);
+      this.summary.push(`X1 <- (${a} + ${b}) / 2`);
+      this.summary.push(`X1 = ${xCurr}`);
 
       this.solution.push(`BM(f(x), [a, b], Ɛ) -> BM(${this.toPrintEq}, [${a}, ${b}], ${this.errorTolerance})`);
       this.solution.push(`X1 <- (${a} + ${b}) / 2`);
@@ -264,19 +278,32 @@ export default {
       do {
         xPrev = xCurr;
 
+        this.summary.push(`f(${a}) * f(${xCurr}) ? 0`);
+
         this.solution.push(`f(${a}) * f(${xCurr}) ? 0`);
 
         if (func(a) * func(xCurr) < 0) {
+          this.summary.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} < 0`);
+          this.summary.push(`b <- ${xCurr}`);
+
           this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} < 0`);
           this.solution.push(`b <- ${xCurr}`);
           b = xCurr;
         }
         else if (func(a) * func(xCurr) > 0) {
+          this.summary.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} > 0`);
+          this.summary.push(`a <- ${xCurr}`);
+
           this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} > 0`);
           this.solution.push(`a <- ${xCurr}`);
           a = xCurr;
         }
         else {
+          this.estimates.push(`X${iter} = ${xCurr} is the exact solution`);
+
+          this.summary.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} = 0`);
+          this.summary.push(`X${iter} = ${xCurr} is the exact solution`);
+
           this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} = 0`);
 
           this.solution.push(`X${iter} = ${xCurr} is the exact solution`);
@@ -288,6 +315,11 @@ export default {
 
         xCurr = shortenDecimal(shortenDecimal(a + b) / 2);
 
+        this.estimates.push(`X${iter} = ${xCurr}`);
+
+        this.summary.push(`X${iter} <- (${a} + ${b}) / 2`);
+        this.summary.push(`X${iter} = ${xCurr}`);
+
         this.solution.push(`X${iter} <- (${a} + ${b}) / 2`);
         this.solution.push(`X${iter} <- (${shortenDecimal(a + b)}) / 2`);
         this.solution.push(`X${iter} = ${xCurr}`);
@@ -296,6 +328,10 @@ export default {
       } while (Math.abs(xCurr - xPrev) >= this.errorTolerance && iter <= this.maxiter)
 
       if (iter > this.maxiter) {
+        this.estimates.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
+
+        this.summary.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
+
         this.solution.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
         this.answer = `the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`;
         
@@ -303,13 +339,17 @@ export default {
         return;
       }
 
+      this.estimates.push(`X${iter-1} = ${xCurr} is our estimate`);
+
+      this.summary.push(`X${iter-1} = ${xCurr} is our estimate`);
+
       this.solution.push(`X${iter-1} = ${xCurr} is our estimate`);
       this.answer = `X${iter-1} = ${xCurr} is our estimate`;
 
       this.handleEstimates();
     },
     handleEstimates () {
-      this.$emit('handle-estimates', {'solution':this.solution, 'answer':this.answer});
+      this.$emit('handle-estimates', {'estimates':this.estimates, 'summary':this.summary, 'solution':this.solution, 'answer':this.answer});
     }
   },
   watch: {
