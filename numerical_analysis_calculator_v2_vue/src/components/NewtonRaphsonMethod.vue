@@ -183,6 +183,10 @@ export default {
 
       if (derivFunc(this.initialGuess) === 0 || this.initialGuess < -15 || this.initialGuess > 15) throw new Error();
     },
+    shortenDecimal (num) {
+      console.log(num);
+      return parseFloat(num.toFixed(this.correctDigits));
+    },
     handleCalculate () {
       this.solution = [];
       this.answer = '';
@@ -196,6 +200,8 @@ export default {
       const errorTolerance = this.errorTolerance;
       const slopeThreshold = this.slopeThreshold;
       const maxiter = this.maxiter;
+
+      const shortenDecimal = this.shortenDecimal;
 
       const func = this.func;
       const derivFunc = this.derivEq.buildFunction();
@@ -218,21 +224,21 @@ export default {
         }
       }
       let xPrev = initialGuess;
-      let xCurr = xPrev - (func(xPrev) / derivFunc(xPrev));
+      let xCurr = shortenDecimal(xPrev - (shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev))));
 
-      this.solution.push(`NM(f(x), f'(x), Xo, Ɛ, 𝛿, maxiter) -> NM(${correctedEq}, ${derivEq}, ${initialGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
+      this.solution.push(`NM(f(x), f'(x), Xo, Ɛ, 𝛿, maxiter) -> NM(${this.toPrintEq}, ${derivEq}, ${initialGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
       this.solution.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-      this.solution.push(`X1 <- ${xPrev} - (${func(xPrev)} / ${derivFunc(xPrev)})`);
+      this.solution.push(`X1 <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
       this.solution.push(`X1 = ${xCurr}`);
 
       let iter = 2;
 
       do {
         xPrev = xCurr;
-        xCurr = xPrev - (func(xPrev) / derivFunc(xPrev));
+        xCurr = shortenDecimal(xPrev - (shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev))));
 
         this.solution.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-        this.solution.push(`X${iter} <- ${xPrev} - (${func(xPrev)} / ${derivFunc(xPrev)})`);
+        this.solution.push(`X${iter} <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
         this.solution.push(`X${iter} = ${xCurr}`);
 
         if (func(xCurr) === 0) {
@@ -260,7 +266,7 @@ export default {
         //   this.randomizeGuess();
         //   this.handleCalculate();
         // }
-        xCurr = parseFloat(xCurr.toFixed(correctDigits));
+        xCurr = shortenDecimal(xCurr);
         this.solution.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
         this.answer = `the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`;
         
@@ -268,7 +274,7 @@ export default {
         return;
       }
 
-      xCurr = parseFloat(xCurr.toFixed(correctDigits));
+      xCurr = shortenDecimal(xCurr);
       this.solution.push(`X${iter-1} = ${xCurr} is our estimate`);
       this.answer = `X${iter-1} = ${xCurr} is our estimate`;
 
@@ -296,10 +302,21 @@ export default {
   },
   computed: {
     func () {
-      return new Function('x', 'return ' + this.correctedEq);
+      return new Function('x', `return ${this.correctedEq}`);
     },
     errorTolerance () {
       return 1 / (10 ** this.correctDigits);
+    },
+    toPrintEq () {
+      let eq = this.equation;
+
+      for(let i = 0; i < eq.length; i++) {
+        if (eq[i] === "x" && Number.isInteger(Number(eq[i-1]))) {
+          eq = eq.substring(0, i) + '*' + eq.substring(i);
+        }
+      }
+
+      return eq;
     },
     correctedEq () {
       let eq = this.equation;
