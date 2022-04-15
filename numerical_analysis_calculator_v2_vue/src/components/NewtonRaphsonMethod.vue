@@ -13,7 +13,7 @@
             v-model="numMethod"
           >
             <option value="bisectionMethod">Bisection Method</option>
-            <option value="regulaFalsiMethod">Regula-Falsi Method</option>
+            <option value="falsePositionMethod">False Position Method</option>
             <option value="newtonRaphsonMethod" selected>Newton Raphson Method</option>
             <option value="secantMethod">Secant Method</option>
             <option value="MOSS">Method of Successive Substitution</option>
@@ -126,7 +126,7 @@
         &emsp;if |f'(xCurr)| &lt; 𝛿<br>
           &emsp;&emsp;print(`|f'(${xCurr})| &lt; ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`)<br>
         &emsp;iter++<br>
-      until |xCurr - xPrev| &lt; E or iter > maxiter<br>
+      until |xCurr - xPrev| &lt; Ɛ or iter &gt; maxiter<br>
     </p>
   </div>
 </template>
@@ -184,7 +184,6 @@ export default {
       if (derivFunc(this.initialGuess) === 0 || this.initialGuess < -15 || this.initialGuess > 15) throw new Error();
     },
     shortenDecimal (num) {
-      console.log(num);
       return parseFloat(num.toFixed(this.correctDigits));
     },
     handleCalculate () {
@@ -229,6 +228,7 @@ export default {
       this.solution.push(`NM(f(x), f'(x), Xo, Ɛ, 𝛿, maxiter) -> NM(${this.toPrintEq}, ${derivEq}, ${initialGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
       this.solution.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
       this.solution.push(`X1 <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
+      this.solution.push(`X1 <- ${xPrev} - (${shortenDecimal(shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev)))})`);
       this.solution.push(`X1 = ${xCurr}`);
 
       let iter = 2;
@@ -239,6 +239,7 @@ export default {
 
         this.solution.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
         this.solution.push(`X${iter} <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
+        this.solution.push(`X${iter} <- ${xPrev} - (${shortenDecimal(shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev)))})`);
         this.solution.push(`X${iter} = ${xCurr}`);
 
         if (func(xCurr) === 0) {

@@ -22,7 +22,7 @@
       <div class="accordion-body text-start">
         <template v-for="(line, index) in printSolution">
           <p 
-            v-if="line.includes('=') || (!line.includes('Please') && index === printSolution.length - 1)" 
+            v-if="line.includes('=')" 
             :key="index.uuid" 
             class="lead fw-bold"
           >

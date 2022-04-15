@@ -116,7 +116,7 @@
       xPrev = previous estimate<br>
       a = starting bound<br>
       b = ending bound<br>
-      E = error tolerance<br>
+      Ɛ = error tolerance<br>
       <br>
       Pseudocode:<br>
       float xCurr, xPrev<br>
@@ -130,7 +130,8 @@
           &emsp;&emsp;a = xCurr<br>
         &emsp;else print(xCurr + "is the exact solution")<br>
         &emsp;xCurr = (a + b) / 2<br>
-      until |xCurr - xPrev| &lt; E<br>
+        &emsp;iter++<br>
+      until |xCurr - xPrev| &lt; Ɛ or iter &gt; maxiter<br>
     </p>
   </div>
 </template>
@@ -144,7 +145,7 @@ export default {
   },
   data () {
     return {
-      numMethod: 'bisectionMethod',
+      numMethod: 'falsePositionMethod',
       equation: '',
       randomBounds: false,
       startingBound: 1,
@@ -152,17 +153,32 @@ export default {
       maxiter: 100,
       correctDigits: 4,
       solution: [],
-      answer: ''
+      answer: '',
+      calculating: false,
+      prevCorrectDigits: 4
     }
   },
   methods: {
+    countDecimals (num) {
+      // code adapted from and credits to:
+      // https://stackoverflow.com/a/17369245
+      if (Math.floor(num) === num) return 0;
+
+      var str = num.toString();
+      if (str.indexOf(".") !== -1 && str.indexOf("-") !== -1) {
+          return str.split("-")[1] || 0;
+      } else if (str.indexOf(".") !== -1) {
+          return str.split(".")[1].length || 0;
+      }
+      return str.split("-")[1] || 0;
+    },
     randomizeBounds () {
       const func = this.func;
       let a = 1;
       let b = 3;
-      const maxiter = 100;
+      const randMaxiter = 100;
 
-      for (let i = 0; func(a) * func(b) >= 0 && i < maxiter; i++) {
+      for (let i = 0; func(a) * func(b) >= 0 && i < randMaxiter; i++) {
         a--;
         b++;
       }
@@ -170,7 +186,7 @@ export default {
       if (func(a) * func(b) >= 0) {
         a = 1;
         b = 5;
-        for (let i = 0; func(a) * func(b) >= 0 && i < maxiter; i++) {
+        for (let i = 0; func(a) * func(b) >= 0 && i < randMaxiter; i++) {
           a++;
           b++;
         }
@@ -179,7 +195,7 @@ export default {
       if (func(a) * func(b) >= 0) {
         a = -1;
         b = -5;
-        for (let i = 0; func(a) * func(b) >= 0 && i < maxiter; i++) {
+        for (let i = 0; func(a) * func(b) >= 0 && i < randMaxiter; i++) {
           a--;
           b--;
         }
@@ -203,9 +219,17 @@ export default {
         this.endingBound = endingRand;
       }
     },
+    shortenDecimal (num) {
+      console.log(this.correctDigits);
+      return parseFloat(num.toFixed(this.correctDigits));
+    },
     handleCalculate () {
+      this.prevCorrectDigits = this.correctDigits;
+
       this.solution = [];
       this.answer = '';
+
+      const shortenDecimal = this.shortenDecimal;
 
       const func = this.func;
 
@@ -228,56 +252,59 @@ export default {
       let xCurr, xPrev = 0;
       let a = this.startingBound;
       let b = this.endingBound;
-      xCurr = (a + b) / 2;
+      xCurr = shortenDecimal(shortenDecimal(a + b) / 2);
 
-      this.solution.push(`BM(f(x), [a, b], E) -> BM(${this.correctedEq}, [${a}, ${b}], ${this.errorTolerance})`);
-      this.solution.push(`xCurr <- (${a} + ${b}) / 2 (iteration 1)`);
-      this.solution.push(`repeat until |xCurr - xPrev| < ${this.errorTolerance}`);
+      this.solution.push(`BM(f(x), [a, b], Ɛ) -> BM(${this.toPrintEq}, [${a}, ${b}], ${this.errorTolerance})`);
+      this.solution.push(`X1 <- (${a} + ${b}) / 2`);
+      this.solution.push(`X1 <- (${shortenDecimal(a + b)}) / 2`);
+      this.solution.push(`X1 = ${xCurr}`);
 
       let iter = 2;
 
       do {
-        this.solution.push(`iteration ${iter}:`);
-        this.solution.push(`xPrev <- ${xCurr} (xCurr)`);
         xPrev = xCurr;
 
+        this.solution.push(`f(${a}) * f(${xCurr}) ? 0`);
+
         if (func(a) * func(xCurr) < 0) {
-          this.solution.push(`func(${a}) * func(${xCurr}) [${func(a)} * ${func(xCurr)}] < 0`);
-          this.solution.push(`b <- ${xCurr} (xCurr)`);
+          this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} < 0`);
+          this.solution.push(`b <- ${xCurr}`);
           b = xCurr;
         }
         else if (func(a) * func(xCurr) > 0) {
-          this.solution.push(`func(${a}) * func(${xCurr}) [${func(a)} * ${func(xCurr)}] > 0`);
-          this.solution.push(`a <- ${xCurr} (xCurr)`);
+          this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} > 0`);
+          this.solution.push(`a <- ${xCurr}`);
           a = xCurr;
         }
         else {
-          xCurr = parseFloat(xCurr.toFixed(this.correctDigits));
-          this.solution.push(`${xCurr} is the exact solution`);
-          this.answer = `${xCurr} is the exact solution`;
+          this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} = 0`);
+
+          this.solution.push(`X${iter} = ${xCurr} is the exact solution`);
+          this.answer = `X${iter} = ${xCurr} is the exact solution`;
           
           this.handleEstimates();
           return;
         }
 
-        this.solution.push(`xCurr <- (${a} + ${b}) / 2`);
-        xCurr = (a + b) / 2;
+        xCurr = shortenDecimal(shortenDecimal(a + b) / 2);
+
+        this.solution.push(`X${iter} <- (${a} + ${b}) / 2`);
+        this.solution.push(`X${iter} <- (${shortenDecimal(a + b)}) / 2`);
+        this.solution.push(`X${iter} = ${xCurr}`);
         
         iter++;
       } while (Math.abs(xCurr - xPrev) >= this.errorTolerance && iter <= this.maxiter)
 
       if (iter > this.maxiter) {
-        xCurr = parseFloat(xCurr.toFixed(this.correctDigits));
-        this.solution.push(`the calculation has reached maxiter ${this.maxiter}, ${xCurr} is the final estimate we've reached`);
-        this.answer = `the calculation has reached maxiter ${this.maxiter}, ${xCurr} is the final estimate we've reached`;
+        this.solution.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
+        this.answer = `the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`;
         
         this.handleEstimates();
         return;
       }
 
-      xCurr = parseFloat(xCurr.toFixed(this.correctDigits));
-      this.solution.push(`${xCurr} is our estimate`);
-      this.answer = `${xCurr} is our estimate`;
+      this.solution.push(`X${iter-1} = ${xCurr} is our estimate`);
+      this.answer = `X${iter-1} = ${xCurr} is our estimate`;
 
       this.handleEstimates();
     },
@@ -289,16 +316,28 @@ export default {
     numMethod () {
       this.$emit('change-num-method', this.numMethod);
     },
+    startingBound () {
+      if (this.countDecimals(this.startingBound) > 14) this.startingBound = parseFloat(this.startingBound.toFixed(14));
+      this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.startingBound), this.countDecimals(this.endingBound));
+    },
+    endingBound () {
+      if (this.countDecimals(this.endingBound) > 14) this.endingBound = parseFloat(this.endingBound.toFixed(14));
+      this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.startingBound), this.countDecimals(this.endingBound));
+    },
     randomBounds () {
       document.getElementById('startingBound').disabled = this.randomBounds;
       document.getElementById('endingBound').disabled = this.randomBounds;
     },
     maxiter () {
-      if (this.maxiter < 1) this.maxiter = 1;
+      if (this.maxiter !== '') this.maxiter = Math.floor(this.maxiter);
+
+      if (this.maxiter !== '' && this.maxiter < 1) this.maxiter = 1;
       else if (this.maxiter > 500) this.maxiter = 500; 
     },
     correctDigits () {
-      if (this.correctDigits < 0) this.correctDigits = 0;
+      if (this.correctDigits !== '') this.correctDigits = Math.floor(this.correctDigits);
+
+      if (this.correctDigits !== '' && this.correctDigits < 0) this.correctDigits = 0;
       if (this.correctDigits > 14) this.correctDigits = 14;
     }
   },
@@ -308,6 +347,17 @@ export default {
     },
     errorTolerance () {
       return 1 / (10 ** this.correctDigits);
+    },
+    toPrintEq () {
+      let eq = this.equation;
+
+      for(let i = 0; i < eq.length; i++) {
+        if (eq[i] === "x" && Number.isInteger(Number(eq[i-1]))) {
+          eq = eq.substring(0, i) + '*' + eq.substring(i);
+        }
+      }
+
+      return eq;
     },
     correctedEq () {
       let eq = this.equation;
