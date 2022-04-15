@@ -24,6 +24,11 @@
       @change-num-method="changeNumMethod"
       @handle-estimates="handleEstimates"
     />
+    <secant-method
+      v-if="numMethod === 'secantMethod'"
+      @change-num-method="changeNumMethod"
+      @handle-estimates="handleEstimates"
+    />
   </div>
 </div>
 </template>
@@ -33,6 +38,7 @@ import SolutionAccordion from '@/components/SolutionAccordion.vue';
 import BisectionMethod from '@/components/BisectionMethod.vue';
 import FalsePositionMethod from '@/components/FalsePositionMethod.vue';
 import NewtonRaphsonMethod from '@/components/NewtonRaphsonMethod.vue';
+import SecantMethod from '@/components/SecantMethod.vue';
 
 export default {
   name: 'NonlinearEquationsView',
@@ -49,7 +55,8 @@ export default {
     SolutionAccordion,
     BisectionMethod,
     FalsePositionMethod,
-    NewtonRaphsonMethod
+    NewtonRaphsonMethod,
+    SecantMethod
   },
   methods: {
     changeNumMethod (numMethod) {

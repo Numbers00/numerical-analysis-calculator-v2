@@ -14,8 +14,8 @@
           >
             <option value="bisectionMethod">Bisection Method</option>
             <option value="falsePositionMethod">False Position Method</option>
-            <option value="newtonRaphsonMethod" selected>Newton Raphson Method</option>
-            <option value="secantMethod">Secant Method</option>
+            <option value="newtonRaphsonMethod">Newton Raphson Method</option>
+            <option value="secantMethod" selected>Secant Method</option>
             <option value="MOSS">Method of Successive Substitution</option>
           </select>
         </div>
@@ -40,25 +40,33 @@
           <input 
             class="form-check-input" 
             type="checkbox" 
-            v-model="randomGuess"
+            v-model="randomGuesses"
             value=""
-            id="checkRandomGuess"
+            id="checkRandomGuesses"
             required
           >
-          <label class="form-check-label" for="checkRandomGuess">
-            Random Guess
+          <label class="form-check-label" for="checkRandomGuesses">
+            Random Guesses
           </label>
         </div>
 
         &nbsp;or use&nbsp;
         <input 
           type="number" 
-          v-model="initialGuess" 
+          v-model="firstGuess" 
           class="guess-input p-0 form-control" 
-          id="initialGuess"
+          id="firstGuess"
           required
         >
-        &nbsp;as your Initial Guess
+        &nbsp;and&nbsp;
+        <input 
+          type="number" 
+          v-model="secondGuess" 
+          class="guess-input p-0 form-control" 
+          id="secondGuess"
+          required
+        >
+        &nbsp;as your Initial Guesses
       </div>
 
       <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
@@ -132,19 +140,18 @@
 </template>
 
 <script>
-import nerdamer from 'nerdamer';
-
 export default {
-  name: 'NewtonRaphsonMethod',
+  name: 'SecantMethod',
   props: {
 
   },
   data () {
     return {
-      numMethod: 'newtonRaphsonMethod',
+      numMethod: 'secantMethod',
       equation: '',
-      randomGuess: false,
-      initialGuess: 1,
+      randomGuesses: false,
+      firstGuess: 1,
+      secondGuess: 5,
       maxiter: 100,
       correctDigits: 4,
       slopeThreshold: 0.0001,
@@ -155,35 +162,59 @@ export default {
     }
   },
   methods: {
-    randomizeGuess () {
-      const derivFunc = this.derivEq.buildFunction();
+    randomizeGuesses () {
+      this.firstGuess = 1;
+      this.secondGuess = 5;
 
-      while (derivFunc(this.initialGuess) === 0 && this.initialGuess < 5) {
-        this.initialGuess++;
+      let func = this.func;
+
+      let a = 1;
+      let b = 5;
+
+      while (func(a) === func(b) && b < 15) {
+        this.secondGuess++;
+        b++;
       }
 
-      if (derivFunc(this.initialGuess) === 0) {
-        this.initialGuess = 0;
-        while (derivFunc(this.initialGuess) === 0 && this.initialGuess > -5) {
-          this.initialGuess--;
-        }
+      while (func(a) === func(b) && a > -15) {
+        this.firstGuess--;
+        a--;
       }
 
-      if (derivFunc(this.initialGuess) === 0) {
-        this.initialGuess = 6;
-        while (derivFunc(this.initialGuess) === 0 && this.initialGuess < 15) {
-          this.initialGuess++;
-        }
+      while (func(a) === func(b) && b < 30) {
+        this.secondGuess++;
+        b++;
       }
 
-      if (derivFunc(this.initialGuess) === 0) {
-        this.initialGuess = -6;
-        while (derivFunc(this.initialGuess) === 0 && this.initialGuess > -15) {
-          this.initialGuess--;
-        }
+      while (func(a) === func(b) && a > -30) {
+        this.firstGuess--;
+        a--;
       }
 
-      if (derivFunc(this.initialGuess) === 0 || this.initialGuess < -15 || this.initialGuess > 15) throw new Error();
+      let firstRand = a - Math.floor(Math.random() * 5);
+      let secondRand = b + Math.floor(Math.random() * 5);
+
+      let randMaxiter = 0;
+
+      while (func(firstRand) === func(secondRand) || randMaxiter < 10) {
+        firstRand = a - Math.floor(Math.random() * 5);
+        secondRand = b + Math.floor(Math.random() * 5);
+
+        this.firstGuess = firstRand;
+        this.secondGuess = secondRand;
+
+        randMaxiter++;
+      }
+
+      if (func(firstRand) !== func(secondRand)) {
+        this.firstGuess = firstRand;
+        this.secondGuess = secondRand;
+      } else {
+        if (func(a) !== func(b)) {
+          this.firstGuess = a;
+          this.secondGuess = b;
+        } else throw new Error();
+      }
     },
     shortenDecimal (num) {
       return parseFloat(num.toFixed(this.correctDigits));
@@ -194,12 +225,13 @@ export default {
       this.solution = [];
       this.answer = '';
 
-      const randomGuess = this.randomGuess;
+      const randomGuesses = this.randomGuesses;
       const correctDigits = this.correctDigits;
 
       const correctedEq = this.correctedEq;
       const derivEq = this.derivEq;
-      const initialGuess = this.initialGuess;
+      const firstGuess = this.firstGuess;
+      const secondGuess = this.secondGuess;
       const errorTolerance = this.errorTolerance;
       const slopeThreshold = this.slopeThreshold;
       const maxiter = this.maxiter;
@@ -207,9 +239,8 @@ export default {
       const shortenDecimal = this.shortenDecimal;
 
       const func = this.func;
-      const derivFunc = this.derivEq.buildFunction();
 
-      if (randomGuess) {
+      if (randomGuesses) {
         try {
           this.initialGuess = 1;
           this.randomizeGuess();
@@ -220,43 +251,39 @@ export default {
           return;
         }
       } else {
-        if (derivFunc(initialGuess) === 0) {
-          this.solution.push(`Substituting ${initialGuess} to ${this.derivEq} results in 0, you can try a different guess`);
+        if (func(firstGuess) === func(secondGuess)) {
+          this.solution.push(`f(${firstGuess}) = f(${secondGuess}), you can try a different guess`);
           this.handleEstimates();
           return;
         }
       }
-      let xPrev = initialGuess;
-      let xCurr = shortenDecimal(xPrev - (shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev))));
 
-      this.estimates.push(`X1 = ${xCurr}`);
+      let xPrev2 = 0;
+      let xPrev1 = secondGuess;
+      let xCurr = firstGuess;
 
-      this.summary.push(`NM(f(x), f'(x), X0, Ɛ, 𝛿, maxiter) -> NM(${this.toPrintEq}, ${derivEq}, ${initialGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
-      this.summary.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-      this.summary.push(`X1 <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
-      this.summary.push(`X1 = ${xCurr}`);
+      this.estimates.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
 
-      this.solution.push(`NM(f(x), f'(x), X0, Ɛ, 𝛿, maxiter) -> NM(${this.toPrintEq}, ${derivEq}, ${initialGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
-      this.solution.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-      this.solution.push(`X1 <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
-      this.solution.push(`X1 <- ${xPrev} - (${shortenDecimal(shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev)))})`);
-      this.solution.push(`X1 = ${xCurr}`);
+      this.summary.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
 
-      let iter = 2;
+      this.solution.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
+
+      let iter = 1;
 
       do {
-        xPrev = xCurr;
-        xCurr = shortenDecimal(xPrev - (shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev))));
+        xPrev2 = xPrev1;
+        xPrev1 = xCurr;
+        xCurr = shortenDecimal(xPrev1) - shortenDecimal(shortenDecimal(shortenDecimal(xPrev1 - xPrev2) * shortenDecimal(func(xPrev1))) / (shortenDecimal(func(xPrev1)) - shortenDecimal(func(xPrev2))));
         
         this.estimates.push(`X${iter} = ${xCurr}`);
 
-        this.summary.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-        this.summary.push(`X${iter} <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
+        this.summary.push(`X${iter} <- ${xPrev1} - ((${xPrev1} - ${xPrev2})(f(${xPrev1})))/(f(${xPrev1}) - f(${xPrev2}))`);
         this.summary.push(`X${iter} = ${xCurr}`);
 
-        this.solution.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-        this.solution.push(`X${iter} <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
-        this.solution.push(`X${iter} <- ${xPrev} - (${shortenDecimal(shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev)))})`);
+        this.solution.push(`X${iter} <- ${xPrev1} - ((${xPrev1} - ${xPrev2})(f(${xPrev1})))/(f(${xPrev1}) - f(${xPrev2}))`);
+        this.solution.push(`X${iter} <- ${xPrev1} - ((${xPrev1 - xPrev2})(${func(xPrev1)}))/(${func(xPrev1)} - ${func(xPrev2)})`);
+        this.solution.push(`X${iter} <- ${xPrev1} - (${(xPrev1 - xPrev2) * func(xPrev1)})/(${func(xPrev1) - func(xPrev2)})`);
+        this.solution.push(`X${iter} <- ${xPrev1} - ${((xPrev1 - xPrev2) * func(xPrev1)) / (func(xPrev1) - func(xPrev2))}`);
         this.solution.push(`X${iter} = ${xCurr}`);
 
         if (func(xCurr) === 0) {
@@ -271,25 +298,25 @@ export default {
           return;
         }
 
-        if (Math.abs(derivFunc(xCurr)) < slopeThreshold) {
+        if (Math.abs(func(xCurr) - func(xPrev1)) < slopeThreshold) {
           // if (randomGuess) {
           //   this.randomizeGuess();
           //   this.handleCalculate();
           // }
-          this.estimate.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
+          this.estimates.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
 
-          this.summary.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
+          this.summary.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
 
-          this.solution.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
+          this.solution.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
 
           this.handleEstimates();
           return; 
         }
         
         iter++;
-      } while (Math.abs(xCurr - xPrev) >= errorTolerance && iter <= maxiter)
+      } while (Math.abs(xCurr - xPrev1) >= errorTolerance && iter <= maxiter)
 
-      if (iter > maxiter && Math.abs(xCurr - xPrev) < errorTolerance) {
+      if (iter > maxiter && Math.abs(xCurr - xPrev1) < errorTolerance) {
         // if (randomGuess) {
         //   this.randomizeGuess();
         //   this.handleCalculate();
@@ -322,8 +349,9 @@ export default {
     numMethod () {
       this.$emit('change-num-method', this.numMethod);
     },
-    randomGuess () {
-      document.getElementById('initialGuess').disabled = this.randomGuess;
+    randomGuesses () {
+      document.getElementById('firstGuess').disabled = this.randomGuesses;
+      document.getElementById('secondGuess').disabled = this.randomGuesses;
     },
     maxiter () {
       if (this.maxiter < 1) this.maxiter = 1;
@@ -366,9 +394,6 @@ export default {
       }
 
       return eq;
-    },
-    derivEq () {
-      return nerdamer.diff(this.correctedEq, 'x').evaluate();
     }
   }
 }
