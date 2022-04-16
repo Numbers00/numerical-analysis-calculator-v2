@@ -119,7 +119,7 @@
         >
         Calculate
         </button>
-        <button type="button" class="col-lg-5 btn btn-dark">Reset</button>
+        <button type="button" @click="handleReset()" class="col-lg-5 btn btn-dark">Reset</button>
       </div>
     </div>
     <p class="text-start mt-4">
@@ -178,7 +178,6 @@ export default {
       summary: [],
       solution: [],
       answer: '',
-      calculating: false,
       prevCorrectDigits: 4
     }
   },
@@ -244,7 +243,6 @@ export default {
       }
     },
     shortenDecimal (num) {
-      console.log(this.correctDigits);
       return parseFloat(num.toFixed(this.correctDigits));
     },
     handleCalculate () {
@@ -377,6 +375,23 @@ export default {
 
       this.solution.push(`X${iter-1} = ${xCurr} is our estimate`);
       this.answer = `X${iter-1} = ${xCurr} is our estimate`;
+
+      this.handleEstimates();
+    },
+    handleReset () {
+      this.equation = '';
+      this.inputErrorTolerance = false;
+      this.randomBounds = false;
+      this.startingBound = 1;
+      this.endingBound = 3;
+      this.maxiter = 100;
+      this.correctDigits = 4;
+      this.errorTolerance = 0.0001;
+      this.estimates = [];
+      this.summary = [];
+      this.solution = [];
+      this.answer = '';
+      this.prevCorrectDigits = 4;
 
       this.handleEstimates();
     },

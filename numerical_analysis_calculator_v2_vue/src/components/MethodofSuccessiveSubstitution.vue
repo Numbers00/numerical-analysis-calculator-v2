@@ -111,7 +111,7 @@
         >
         Calculate
         </button>
-        <button type="button" class="col-lg-5 btn btn-dark">Reset</button>
+        <button type="button" @click="handleReset()" class="col-lg-5 btn btn-dark">Reset</button>
       </div>
     </div>
     <p class="text-start mt-4">
@@ -170,7 +170,8 @@ export default {
       estimates: [],
       summary: [],
       solution: [],
-      answer: ''
+      answer: '',
+      prevCorrectDigits: 4
     }
   },
   methods: {
@@ -194,6 +195,8 @@ export default {
       return parseFloat(num.toFixed(this.correctDigits));
     },
     handleCalculate () {
+      this.prevCorrectDigits = this.correctDigits;
+
       this.estimates = [];
       this.summary = [];
       this.solution = [];
@@ -269,6 +272,9 @@ export default {
           this.summary.push(`∆${iter} = ${relError} has become lower than Ɛ ${computedErrorTolerance}, X${iter} = ${xCurr} is the final estimate we've reached`);
           this.solution.push(`∆${iter} = ${relError} has become lower than Ɛ ${computedErrorTolerance}, X${iter} = ${xCurr} is the final estimate we've reached`);
           this.answer = `∆${iter} = ${relError} has become lower than Ɛ ${computedErrorTolerance}, X${iter} = ${xCurr} is the final estimate we've reached`;
+
+          this.handleEstimates();
+          return;
         }
         
         iter++;
@@ -299,6 +305,22 @@ export default {
 
       this.handleEstimates();
     },
+    handleReset () {
+      this.equation = '';
+      this.inputErrorTolerance = false;
+      this.randomGuess = false;
+      this.initialGuess = 1;
+      this.maxiter = 100;
+      this.correctDigits = 4;
+      this.errorTolerance = 0.0001;
+      this.estimates = [];
+      this.summary = [];
+      this.solution = [];
+      this.answer = '';
+      this.prevCorrectDigits = 4;
+
+      this.handleEstimates();
+    },
     handleEstimates () {
       this.$emit('handle-estimates', {'estimates':this.estimates, 'summary':this.summary, 'solution':this.solution, 'answer':this.answer});
     }
@@ -310,6 +332,9 @@ export default {
     inputErrorTolerance () {
       document.getElementById('correctDigits').disabled = this.inputErrorTolerance;
       document.getElementById('errorTolerance').disabled = !this.inputErrorTolerance;
+    },
+    initialGuess () {
+      this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.initialGuess));
     },
     randomGuess () {
       document.getElementById('initialGuess').disabled = this.randomGuess;

@@ -190,7 +190,8 @@ export default {
       estimates: [],
       summary: [],
       solution: [],
-      answer: ''
+      answer: '',
+      prevCorrectDigits: 4
     }
   },
   methods: {
@@ -265,6 +266,8 @@ export default {
       return parseFloat(num.toFixed(this.correctDigits));
     },
     handleCalculate () {
+      this.prevCorrectDigits = this.correctDigits;
+
       this.estimates = [];
       this.summary = [];
       this.solution = [];
@@ -296,12 +299,12 @@ export default {
           return;
         }
       } else {
-        if (func(firstGuess) === func(secondGuess)) {
-          this.estimates.push(`f(${firstGuess}) = f(${secondGuess}), you can try a different guess`);
-          this.summary.push(`f(${firstGuess}) = f(${secondGuess}), you can try a different guess`);
-          this.solution.push(`f(${firstGuess}) = f(${secondGuess}), you can try a different guess`);
+        if (func(this.firstGuess) === func(this.secondGuess)) {
+          this.estimates.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
+          this.summary.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
+          this.solution.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
 
-          this.answer = `f(${firstGuess}) = f(${secondGuess}), you can try a different guess`;
+          this.answer = `f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`;
           this.handleEstimates();
           return;
         }
@@ -392,6 +395,24 @@ export default {
 
       this.handleEstimates();
     },
+    handleReset () {
+      this.equation = '';
+      this.inputErrorTolerance = false;
+      this.randomGuesses = false;
+      this.firstGuess = 1;
+      this.secondGuess = 5;
+      this.maxiter = 100;
+      this.correctDigits = 4;
+      this.errorTolerance = 0.0001;
+      this.slopeThreshold = 0.00000000000001;
+      this.estimates = [];
+      this.summary = [];
+      this.solution = [];
+      this.answer = '';
+      this.prevCorrectDigits = 4;
+
+      this.handleEstimates();
+    },
     handleEstimates () {
       this.$emit('handle-estimates', {'estimates':this.estimates, 'summary':this.summary, 'solution':this.solution, 'answer':this.answer});
     }
@@ -403,6 +424,12 @@ export default {
     inputErrorTolerance () {
       document.getElementById('correctDigits').disabled = this.inputErrorTolerance;
       document.getElementById('errorTolerance').disabled = !this.inputErrorTolerance;
+    },
+    firstGuess () {
+      this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.firstGuess));
+    },
+    secondGuess () {
+      this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.secondGuess));
     },
     randomGuesses () {
       document.getElementById('firstGuess').disabled = this.randomGuesses;
