@@ -88,6 +88,29 @@
         &nbsp;Decimal Places
       </div>
 
+      <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
+        <div class="form-check">
+          <input 
+            class="form-check-input" 
+            type="checkbox" 
+            v-model="inputErrorTolerance"
+            value=""
+            id="checkErrorTolerance"
+            required
+          >
+        </div>
+
+        or click this to input Error Tolerance&nbsp;
+        <input 
+          type="number" 
+          v-model="errorTolerance"
+          class="longer-places-input p-0 form-control" 
+          id="errorTolerance"
+          required
+        >
+        &nbsp;here
+      </div>
+
       <div class="mt-3 mb-3 row d-flex justify-content-around">
         <button 
           type="button" 
@@ -144,11 +167,13 @@ export default {
     return {
       numMethod: 'falsePositionMethod',
       equation: '',
+      inputErrorTolerance: false,
       randomBounds: false,
       startingBound: 1,
       endingBound: 3,
       maxiter: 100,
       correctDigits: 4,
+      errorTolerance: 0.0001,
       estimates: [],
       summary: [],
       solution: [],
@@ -250,6 +275,9 @@ export default {
           this.estimates.push(`f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`);
           this.summary.push(`f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`);
           this.solution.push(`f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`);
+
+          this.answer = `f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`;
+
           this.handleEstimates();
           return;
         }
@@ -261,12 +289,12 @@ export default {
 
       this.estimates.push(`X1 = ${xCurr}`);
 
-      this.summary.push(`FP(f(x), [a, b], Ɛ) -> FP(${this.toPrintEq}, [${a}, ${b}], ${this.errorTolerance})`);
+      this.summary.push(`FP(f(x), [a, b], Ɛ) -> FP(${this.toPrintEq}, [${a}, ${b}], ${this.computedErrorTolerance})`);
       this.summary.push(`X1 <- ${a} - (f(${a}) * (${b}-${a})) / (f(${b}) - f(${a}))`);
       this.summary.push(`X1 <- ${a} - (${shortenDecimal(func(a))} * ${shortenDecimal(b - a)}) / ${shortenDecimal(func(b))} - ${shortenDecimal(func(a))})`);
       this.summary.push(`X1 = ${xCurr}`);
 
-      this.solution.push(`FP(f(x), [a, b], Ɛ) -> FP(${this.toPrintEq}, [${a}, ${b}], ${this.errorTolerance})`);
+      this.solution.push(`FP(f(x), [a, b], Ɛ) -> FP(${this.toPrintEq}, [${a}, ${b}], ${this.computedErrorTolerance})`);
       this.solution.push(`X1 <- ${a} - (f(${a}) * (${b}-${a})) / (f(${b}) - f(${a}))`);
       this.solution.push(`X1 <- ${a} - (${shortenDecimal(func(a))} * ${shortenDecimal(b - a)}) / ${shortenDecimal(func(b))} - ${shortenDecimal(func(a))})`);
       this.solution.push(`X1 <- ${a} - (${shortenDecimal(func(a)) * shortenDecimal(b-a)} / ${shortenDecimal(func(b)) - shortenDecimal(func(a))})`);
@@ -329,7 +357,7 @@ export default {
         this.solution.push(`X${iter} = ${xCurr}`);
         
         iter++;
-      } while (Math.abs(xCurr - xPrev) >= this.errorTolerance && iter <= this.maxiter)
+      } while (Math.abs(xCurr - xPrev) >= this.computedErrorTolerance && iter <= this.maxiter)
 
       if (iter > this.maxiter) {
         this.estimates.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
@@ -360,6 +388,10 @@ export default {
     numMethod () {
       this.$emit('change-num-method', this.numMethod);
     },
+    inputErrorTolerance () {
+      document.getElementById('correctDigits').disabled = this.inputErrorTolerance;
+      document.getElementById('errorTolerance').disabled = !this.inputErrorTolerance;
+    },
     startingBound () {
       if (this.countDecimals(this.startingBound) > 14) this.startingBound = parseFloat(this.startingBound.toFixed(14));
       this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.startingBound), this.countDecimals(this.endingBound));
@@ -383,14 +415,20 @@ export default {
 
       if (this.correctDigits !== '' && this.correctDigits < 0) this.correctDigits = 0;
       if (this.correctDigits > 14) this.correctDigits = 14;
+    },
+    errorTolerance () {
+      if (this.countDecimals(this.errorTolerance) > 14) this.errorTolerance = parseFloat(this.errorTolerance.toFixed(14));
+
+      if (this.inputErrorTolerance) this.correctDigits = this.countDecimals(this.errorTolerance);
     }
   },
   computed: {
     func () {
       return new Function('x', 'return ' + this.correctedEq);
     },
-    errorTolerance () {
-      return 1 / (10 ** this.correctDigits);
+    computedErrorTolerance () {
+      if (!this.inputErrorTolerance) return 1 / (10 ** this.correctDigits);
+      return this.errorTolerance;
     },
     toPrintEq () {
       let eq = this.equation;
@@ -418,6 +456,9 @@ export default {
 
       return eq;
     }
+  },
+  mounted () {
+    document.getElementById('errorTolerance').disabled = true;
   }
 }
 </script>
@@ -430,8 +471,8 @@ input[type=number] {
   max-height: 22px;
   text-align: center;
 
-  // &.places-input::-webkit-inner-spin-button {
-  // -webkit-appearance: none;
-  // }
+  &.longer-places-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
 }
 </style>

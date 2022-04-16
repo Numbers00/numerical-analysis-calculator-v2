@@ -85,6 +85,38 @@
         &nbsp;Decimal Places
       </div>
 
+      <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
+        <div class="form-check">
+          <input 
+            class="form-check-input" 
+            type="checkbox" 
+            v-model="inputErrorTolerance"
+            value=""
+            id="checkErrorTolerance"
+            required
+          >
+        </div>
+
+        or click this to input Error Tolerance&nbsp;
+        <input 
+          type="number" 
+          v-model="errorTolerance"
+          class="longer-places-input p-0 form-control" 
+          id="errorTolerance"
+          required
+        >
+        &nbsp;w/ Slope Threshold&nbsp;
+        <input 
+          type="number" 
+          v-model="slopeThreshold" 
+          min="0" 
+          max="14" 
+          class="longer-places-input p-0 form-control" 
+          id="slopeThreshold"
+          required
+        >
+      </div>
+
       <div class="mt-3 mb-3 row d-flex justify-content-around">
         <button 
           type="button" 
@@ -97,7 +129,7 @@
       </div>
     </div>
     <p class="text-start mt-4">
-      Newton Raphson Method: NM(f(x), f'(x), Xo, Ɛ, 𝛿, maxiter)<br>
+      Newton Raphson Method: SM(f(x), f'(x), X0, Ɛ, 𝛿, maxiter)<br>
       <br>
       For: Nonlinear Equations<br>
       Brief Description: Is one of the fastest, most accurate, and simplest
@@ -143,11 +175,13 @@ export default {
     return {
       numMethod: 'newtonRaphsonMethod',
       equation: '',
+      inputErrorTolerance: false,
       randomGuess: false,
       initialGuess: 1,
       maxiter: 100,
       correctDigits: 4,
-      slopeThreshold: 0.0001,
+      errorTolerance: 0.0001,
+      slopeThreshold: 0.00000000000001,
       estimates: [],
       summary: [],
       solution: [],
@@ -200,7 +234,7 @@ export default {
       const correctedEq = this.correctedEq;
       const derivEq = this.derivEq;
       const initialGuess = this.initialGuess;
-      const errorTolerance = this.errorTolerance;
+      const computedErrorTolerance = this.computedErrorTolerance;
       const slopeThreshold = this.slopeThreshold;
       const maxiter = this.maxiter;
 
@@ -214,6 +248,8 @@ export default {
           this.initialGuess = 1;
           this.randomizeGuess();
         } catch (e) {
+          this.estimates.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
+          this.summary.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
           this.solution.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
           this.answer = 'Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess';
           this.handleEstimates();
@@ -221,7 +257,10 @@ export default {
         }
       } else {
         if (derivFunc(initialGuess) === 0) {
+          this.estimates.push(`Substituting ${initialGuess} to ${this.derivEq} results in 0, you can try a different guess`);
+          this.summary.push(`Substituting ${initialGuess} to ${this.derivEq} results in 0, you can try a different guess`);
           this.solution.push(`Substituting ${initialGuess} to ${this.derivEq} results in 0, you can try a different guess`);
+          this.answer = `Substituting ${initialGuess} to ${this.derivEq} results in 0, you can try a different guess`;
           this.handleEstimates();
           return;
         }
@@ -277,19 +316,19 @@ export default {
           //   this.handleCalculate();
           // }
           this.estimate.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
-
           this.summary.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
-
           this.solution.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
+
+          this.answer = `|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`;
 
           this.handleEstimates();
           return; 
         }
         
         iter++;
-      } while (Math.abs(xCurr - xPrev) >= errorTolerance && iter <= maxiter)
+      } while (Math.abs(xCurr - xPrev) >= computedErrorTolerance && iter <= maxiter)
 
-      if (iter > maxiter && Math.abs(xCurr - xPrev) < errorTolerance) {
+      if (iter > maxiter && Math.abs(xCurr - xPrev) < computedErrorTolerance) {
         // if (randomGuess) {
         //   this.randomizeGuess();
         //   this.handleCalculate();
@@ -322,6 +361,10 @@ export default {
     numMethod () {
       this.$emit('change-num-method', this.numMethod);
     },
+    inputErrorTolerance () {
+      document.getElementById('correctDigits').disabled = this.inputErrorTolerance;
+      document.getElementById('errorTolerance').disabled = !this.inputErrorTolerance;
+    },
     randomGuess () {
       document.getElementById('initialGuess').disabled = this.randomGuess;
     },
@@ -332,14 +375,23 @@ export default {
     correctDigits () {
       if (this.correctDigits < 0) this.correctDigits = 0;
       if (this.correctDigits > 14) this.correctDigits = 14;
+    },
+    errorTolerance () {
+      if (this.countDecimals(this.errorTolerance) > 14) this.errorTolerance = parseFloat(this.errorTolerance.toFixed(14));
+
+      if (this.inputErrorTolerance) this.correctDigits = this.countDecimals(this.errorTolerance);
+    },
+    slopeThreshold () {
+      if (this.countDecimals(this.slopeThreshold) > 14) this.slopeThreshold = parseFloat(this.slopeThreshold.toFixed(14));
     }
   },
   computed: {
     func () {
       return new Function('x', `return ${this.correctedEq}`);
     },
-    errorTolerance () {
-      return 1 / (10 ** this.correctDigits);
+    computedErrorTolerance () {
+      if (!this.inputErrorTolerance) return 1 / (10 ** this.correctDigits);
+      return this.errorTolerance;
     },
     toPrintEq () {
       let eq = this.equation;
@@ -370,6 +422,9 @@ export default {
     derivEq () {
       return nerdamer.diff(this.correctedEq, 'x').evaluate();
     }
+  },
+  mounted () {
+    document.getElementById('errorTolerance').disabled = true;
   }
 }
 </script>
@@ -382,8 +437,8 @@ input[type=number] {
   max-height: 22px;
   text-align: center;
 
-  // &.places-input::-webkit-inner-spin-button {
-  // -webkit-appearance: none;
-  // }
+  &.longer-places-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
 }
 </style>

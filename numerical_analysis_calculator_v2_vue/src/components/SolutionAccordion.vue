@@ -87,19 +87,19 @@ export default {
   },
   computed: {
     printEstimates () {
-      if (this.estimates.length === 0) return ['Please click "solve" to start displaying the estimates'];
+      if (this.estimates.length === 0) return ['Please click "calculate" to start displaying the estimates'];
       else return this.estimates;
     },
     printSummary () {
-      if (this.summary.length === 0) return ['Please click "solve" to start displaying the summary'];
+      if (this.summary.length === 0) return ['Please click "calculate" to start displaying the summary'];
       else return this.summary;
     },
     printSolution () {
-      if (this.solution.length === 0) return ['Please click "solve" to start displaying the solution'];
+      if (this.solution.length === 0) return ['Please click "calculate" to start displaying the solution'];
       else return this.solution;
     },
     printAnswer () {
-      if (this.answer === '') return 'Please click "solve" to start displaying the answer';
+      if (this.answer === '') return 'Please click "calculate" to start displaying the answer';
       else return this.answer;
     }
   }

@@ -74,8 +74,6 @@
         <input 
           type="number" 
           v-model="maxiter"
-          min="1" 
-          max="500" 
           class="places-input p-0 form-control" 
           id="maxIteration"
           required
@@ -83,14 +81,42 @@
         &nbsp;and Solution correct up to&nbsp;
         <input 
           type="number" 
-          v-model="correctDigits" 
-          min="0" 
-          max="14" 
+          v-model="correctDigits"
           class="places-input p-0 form-control" 
           id="correctDigits"
           required
         >
         &nbsp;Decimal Places
+      </div>
+
+      <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
+        <div class="form-check">
+          <input 
+            class="form-check-input" 
+            type="checkbox" 
+            v-model="inputErrorTolerance"
+            value=""
+            id="checkErrorTolerance"
+            required
+          >
+        </div>
+
+        or click this to input Error Tolerance&nbsp;
+        <input 
+          type="number" 
+          v-model="errorTolerance"
+          class="longer-places-input p-0 form-control" 
+          id="errorTolerance"
+          required
+        >
+        &nbsp;w/ Slope Threshold&nbsp;
+        <input 
+          type="number" 
+          v-model="slopeThreshold" 
+          class="longer-places-input p-0 form-control" 
+          id="slopeThreshold"
+          required
+        >
       </div>
 
       <div class="mt-3 mb-3 row d-flex justify-content-around">
@@ -105,30 +131,34 @@
       </div>
     </div>
     <p class="text-start mt-4">
-      Newton Raphson Method: NM(f(x), f'(x), Xo, Ɛ, 𝛿, maxiter)<br>
+      Secant Method: SM(f(x), X0, X1, Ɛ, 𝛿, maxiter)<br>
       <br>
       For: Nonlinear Equations<br>
-      Brief Description: Is one of the fastest, most accurate, and simplest
-      iterative algorithms, but does not always converge <br>
-      Comparison with Other Methods: Is one of the fastest and simplest<br>
+      Brief Description: Is one of the fastest iterative algorithms, but
+      does not always converge<br>
+      Comparison with Other Methods: Can be as fast as Newton-Raphson Method,
+      but exchanging simplicity with not needing to know the derivative
+      function<br>
       <br>
       Legend:<br>
       xCurr = current estimate<br>
-      xPrev = previous estimate<br>
-      initialGuess = initial Guess<br>
+      xPrev1 = previous estimate<br>
+      xPrev2 = previous previous estimate<br>
       Ɛ = error tolerance<br>
       𝛿 = slope threshold<br>
       maxiter = max iteration<br>
       iter = current iteration<br>
       <br>
       Pseudocode:<br>
-      float xPrev = initialGuess<br>
-      float xCurr = xPrev - (f(xPrev) / f'(xPrev)) (iteration 1)<br>
-      iter = 2<br>
+      float xPrev2 = 0<br>
+      float xPrev1 = X1<br>
+      float xCurr = X0<br>
+      iter = 1<br>
       <br>
       repeat<br>
-        &emsp;xPrev = xCurr<br>
-        &emsp;xCurr = xPrev - (f(xPrev) / f'(xPrev))<br>
+        &emsp;xPrev2 = xPrev1<br>
+        &emsp;xPrev1 = xCurr<br>
+        &emsp;xCurr = xPrev1 - ((xPrev1 - xPrev2)(f(xPrev1)))/(f(xPrev1) - f(xPrev2))<br>
         &emsp;if f(xCurr) === 0<br>
           &emsp;&emsp;print(xCurr + " is the exact solution")<br>
         &emsp;if |f'(xCurr)| &lt; 𝛿<br>
@@ -149,12 +179,14 @@ export default {
     return {
       numMethod: 'secantMethod',
       equation: '',
+      inputErrorTolerance: false,
       randomGuesses: false,
       firstGuess: 1,
       secondGuess: 5,
       maxiter: 100,
       correctDigits: 4,
-      slopeThreshold: 0.0001,
+      errorTolerance: 0.0001,
+      slopeThreshold: 0.00000000000001,
       estimates: [],
       summary: [],
       solution: [],
@@ -162,6 +194,19 @@ export default {
     }
   },
   methods: {
+    countDecimals (num) {
+      // code adapted from and credits to:
+      // https://stackoverflow.com/a/17369245
+      if (Math.floor(num) === num) return 0;
+
+      var str = num.toString();
+      if (str.indexOf(".") !== -1 && str.indexOf("-") !== -1) {
+          return str.split("-")[1] || 0;
+      } else if (str.indexOf(".") !== -1) {
+          return str.split(".")[1].length || 0;
+      }
+      return str.split("-")[1] || 0;
+    },
     randomizeGuesses () {
       this.firstGuess = 1;
       this.secondGuess = 5;
@@ -232,7 +277,7 @@ export default {
       const derivEq = this.derivEq;
       const firstGuess = this.firstGuess;
       const secondGuess = this.secondGuess;
-      const errorTolerance = this.errorTolerance;
+      const computedErrorTolerance = this.computedErrorTolerance;
       const slopeThreshold = this.slopeThreshold;
       const maxiter = this.maxiter;
 
@@ -243,8 +288,10 @@ export default {
       if (randomGuesses) {
         try {
           this.initialGuess = 1;
-          this.randomizeGuess();
+          this.randomizeGuesses();
         } catch (e) {
+          this.estimates.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
+          this.summary.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
           this.solution.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
           this.answer = 'Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess';
           this.handleEstimates();
@@ -252,7 +299,11 @@ export default {
         }
       } else {
         if (func(firstGuess) === func(secondGuess)) {
+          this.estimates.push(`f(${firstGuess}) = f(${secondGuess}), you can try a different guess`);
+          this.summary.push(`f(${firstGuess}) = f(${secondGuess}), you can try a different guess`);
           this.solution.push(`f(${firstGuess}) = f(${secondGuess}), you can try a different guess`);
+
+          this.answer = `f(${firstGuess}) = f(${secondGuess}), you can try a different guess`;
           this.handleEstimates();
           return;
         }
@@ -262,18 +313,18 @@ export default {
       let xPrev1 = secondGuess;
       let xCurr = firstGuess;
 
-      this.estimates.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
+      this.estimates.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
 
-      this.summary.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
+      this.summary.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
 
-      this.solution.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${errorTolerance}, ${slopeThreshold}, ${maxiter})`);
+      this.solution.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
 
       let iter = 1;
 
       do {
         xPrev2 = xPrev1;
         xPrev1 = xCurr;
-        xCurr = shortenDecimal(xPrev1) - shortenDecimal(shortenDecimal(shortenDecimal(xPrev1 - xPrev2) * shortenDecimal(func(xPrev1))) / (shortenDecimal(func(xPrev1)) - shortenDecimal(func(xPrev2))));
+        xCurr = shortenDecimal(shortenDecimal(xPrev1) - shortenDecimal(shortenDecimal(shortenDecimal(xPrev1 - xPrev2) * shortenDecimal(func(xPrev1))) / (shortenDecimal(func(xPrev1)) - shortenDecimal(func(xPrev2)))));
         
         this.estimates.push(`X${iter} = ${xCurr}`);
 
@@ -281,9 +332,9 @@ export default {
         this.summary.push(`X${iter} = ${xCurr}`);
 
         this.solution.push(`X${iter} <- ${xPrev1} - ((${xPrev1} - ${xPrev2})(f(${xPrev1})))/(f(${xPrev1}) - f(${xPrev2}))`);
-        this.solution.push(`X${iter} <- ${xPrev1} - ((${xPrev1 - xPrev2})(${func(xPrev1)}))/(${func(xPrev1)} - ${func(xPrev2)})`);
-        this.solution.push(`X${iter} <- ${xPrev1} - (${(xPrev1 - xPrev2) * func(xPrev1)})/(${func(xPrev1) - func(xPrev2)})`);
-        this.solution.push(`X${iter} <- ${xPrev1} - ${((xPrev1 - xPrev2) * func(xPrev1)) / (func(xPrev1) - func(xPrev2))}`);
+        this.solution.push(`X${iter} <- ${xPrev1} - ((${shortenDecimal(xPrev1 - xPrev2)})(${shortenDecimal(func(xPrev1))}))/(${shortenDecimal(func(xPrev1))} - ${shortenDecimal(func(xPrev2))})`);
+        this.solution.push(`X${iter} <- ${xPrev1} - (${shortenDecimal(xPrev1 - xPrev2) * shortenDecimal(func(xPrev1))})/(${shortenDecimal(func(xPrev1)) - shortenDecimal(func(xPrev2))})`);
+        this.solution.push(`X${iter} <- ${xPrev1} - ${shortenDecimal(shortenDecimal(shortenDecimal(xPrev1 - xPrev2) * shortenDecimal(func(xPrev1))) / shortenDecimal(shortenDecimal(func(xPrev1)) - shortenDecimal(func(xPrev2))))}`);
         this.solution.push(`X${iter} = ${xCurr}`);
 
         if (func(xCurr) === 0) {
@@ -304,17 +355,16 @@ export default {
           //   this.handleCalculate();
           // }
           this.estimates.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
-
           this.summary.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
-
           this.solution.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
+          this.answer = `|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`;
 
           this.handleEstimates();
           return; 
         }
         
         iter++;
-      } while (Math.abs(xCurr - xPrev1) >= errorTolerance && iter <= maxiter)
+      } while (Math.abs(xCurr - xPrev1) >= computedErrorTolerance && iter <= maxiter)
 
       if (iter > maxiter && Math.abs(xCurr - xPrev1) < errorTolerance) {
         // if (randomGuess) {
@@ -349,6 +399,10 @@ export default {
     numMethod () {
       this.$emit('change-num-method', this.numMethod);
     },
+    inputErrorTolerance () {
+      document.getElementById('correctDigits').disabled = this.inputErrorTolerance;
+      document.getElementById('errorTolerance').disabled = !this.inputErrorTolerance;
+    },
     randomGuesses () {
       document.getElementById('firstGuess').disabled = this.randomGuesses;
       document.getElementById('secondGuess').disabled = this.randomGuesses;
@@ -360,14 +414,23 @@ export default {
     correctDigits () {
       if (this.correctDigits < 0) this.correctDigits = 0;
       if (this.correctDigits > 14) this.correctDigits = 14;
+    },
+    errorTolerance () {
+      if (this.countDecimals(this.errorTolerance) > 14) this.errorTolerance = parseFloat(this.errorTolerance.toFixed(14));
+
+      if (this.inputErrorTolerance) this.correctDigits = this.countDecimals(this.errorTolerance);
+    },
+    slopeThreshold () {
+      if (this.countDecimals(this.slopeThreshold) > 14) this.slopeThreshold = parseFloat(this.slopeThreshold.toFixed(14));
     }
   },
   computed: {
     func () {
       return new Function('x', `return ${this.correctedEq}`);
     },
-    errorTolerance () {
-      return 1 / (10 ** this.correctDigits);
+    computedErrorTolerance () {
+      if (!this.inputErrorTolerance) return 1 / (10 ** this.correctDigits);
+      return this.errorTolerance;
     },
     toPrintEq () {
       let eq = this.equation;
@@ -395,6 +458,9 @@ export default {
 
       return eq;
     }
+  },
+  mounted () {
+    document.getElementById('errorTolerance').disabled = true;
   }
 }
 </script>
@@ -407,8 +473,8 @@ input[type=number] {
   max-height: 22px;
   text-align: center;
 
-  // &.places-input::-webkit-inner-spin-button {
-  // -webkit-appearance: none;
-  // }
+  &.longer-places-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
 }
 </style>
