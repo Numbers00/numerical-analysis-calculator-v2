@@ -16,7 +16,7 @@
             <option value="falsePositionMethod">False Position Method</option>
             <option value="newtonRaphsonMethod">Newton Raphson Method</option>
             <option value="secantMethod">Secant Method</option>
-            <option value="MOSS">Method of Successive Substitution</option>
+            <option value="methodofSuccessiveSubstitution">Method of Successive Substitution</option>
           </select>
         </div>
 
@@ -28,7 +28,7 @@
               type="text"
               class="form-control col-11" 
               id="equation"
-              placeholder="3x^2 - 6x + 5"
+              placeholder="x^3 - 3x + 1"
               v-model="equation"
               required
             >
@@ -410,7 +410,8 @@ export default {
       if (this.correctDigits !== '') this.correctDigits = Math.floor(this.correctDigits);
 
       if (this.correctDigits !== '' && this.correctDigits < 0) this.correctDigits = 0;
-      if (this.correctDigits > 14) this.correctDigits = 14;
+      else if (this.correctDigits > 14) this.correctDigits = 14;
+      else if (!this.inputErrorTolerance) this.errorTolerance = 1 / (10 ** this.correctDigits);
     },
     errorTolerance () {
       if (this.countDecimals(this.errorTolerance) > 14) this.errorTolerance = parseFloat(this.errorTolerance.toFixed(14));

@@ -16,7 +16,7 @@
             <option value="falsePositionMethod">False Position Method</option>
             <option value="newtonRaphsonMethod">Newton Raphson Method</option>
             <option value="secantMethod" selected>Secant Method</option>
-            <option value="MOSS">Method of Successive Substitution</option>
+            <option value="methodofSuccessiveSubstitution">Method of Successive Substitution</option>
           </select>
         </div>
 
@@ -28,7 +28,7 @@
               type="text"
               class="form-control col-11" 
               id="equation"
-              placeholder="3x^2 - 6x + 5"
+              placeholder="x^3 - 3x + 1"
               v-model="equation"
               required
             >
@@ -274,9 +274,6 @@ export default {
       const correctDigits = this.correctDigits;
 
       const correctedEq = this.correctedEq;
-      const derivEq = this.derivEq;
-      const firstGuess = this.firstGuess;
-      const secondGuess = this.secondGuess;
       const computedErrorTolerance = this.computedErrorTolerance;
       const slopeThreshold = this.slopeThreshold;
       const maxiter = this.maxiter;
@@ -287,7 +284,8 @@ export default {
 
       if (randomGuesses) {
         try {
-          this.initialGuess = 1;
+          this.firstGuess = 1;
+          this.secondGuess = 5;
           this.randomizeGuesses();
         } catch (e) {
           this.estimates.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
@@ -308,6 +306,9 @@ export default {
           return;
         }
       }
+
+      const firstGuess = this.firstGuess;
+      const secondGuess = this.secondGuess;
 
       let xPrev2 = 0;
       let xPrev1 = secondGuess;
@@ -354,10 +355,10 @@ export default {
           //   this.randomizeGuess();
           //   this.handleCalculate();
           // }
-          this.estimates.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
-          this.summary.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
-          this.solution.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`);
-          this.answer = `|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`;
+          this.estimates.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.summary.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.solution.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.answer = `|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`;
 
           this.handleEstimates();
           return; 
@@ -408,12 +409,17 @@ export default {
       document.getElementById('secondGuess').disabled = this.randomGuesses;
     },
     maxiter () {
-      if (this.maxiter < 1) this.maxiter = 1;
+      if (this.maxiter !== '') this.maxiter = Math.floor(this.maxiter);
+
+      if (this.maxiter !== '' && this.maxiter < 1) this.maxiter = 1;
       else if (this.maxiter > 500) this.maxiter = 500; 
     },
     correctDigits () {
-      if (this.correctDigits < 0) this.correctDigits = 0;
-      if (this.correctDigits > 14) this.correctDigits = 14;
+      if (this.correctDigits !== '') this.correctDigits = Math.floor(this.correctDigits);
+
+      if (this.correctDigits !== '' && this.correctDigits < 0) this.correctDigits = 0;
+      else if (this.correctDigits > 14) this.correctDigits = 14;
+      else if (!this.inputErrorTolerance) this.errorTolerance = 1 / (10 ** this.correctDigits);
     },
     errorTolerance () {
       if (this.countDecimals(this.errorTolerance) > 14) this.errorTolerance = parseFloat(this.errorTolerance.toFixed(14));

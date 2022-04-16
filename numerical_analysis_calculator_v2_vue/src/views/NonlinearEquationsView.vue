@@ -29,6 +29,11 @@
       @change-num-method="changeNumMethod"
       @handle-estimates="handleEstimates"
     />
+    <methodof-successive-substitution
+      v-if="numMethod === 'methodofSuccessiveSubstitution'"
+      @change-num-method="changeNumMethod"
+      @handle-estimates="handleEstimates"
+    />
   </div>
 </div>
 </template>
@@ -39,6 +44,7 @@ import BisectionMethod from '@/components/BisectionMethod.vue';
 import FalsePositionMethod from '@/components/FalsePositionMethod.vue';
 import NewtonRaphsonMethod from '@/components/NewtonRaphsonMethod.vue';
 import SecantMethod from '@/components/SecantMethod.vue';
+import MethodofSuccessiveSubstitution from '@/components/MethodofSuccessiveSubstitution.vue'
 
 export default {
   name: 'NonlinearEquationsView',
@@ -56,7 +62,8 @@ export default {
     BisectionMethod,
     FalsePositionMethod,
     NewtonRaphsonMethod,
-    SecantMethod
+    SecantMethod,
+    MethodofSuccessiveSubstitution
   },
   methods: {
     changeNumMethod (numMethod) {

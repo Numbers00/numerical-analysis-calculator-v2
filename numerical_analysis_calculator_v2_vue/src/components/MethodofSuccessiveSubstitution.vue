@@ -14,21 +14,21 @@
           >
             <option value="bisectionMethod">Bisection Method</option>
             <option value="falsePositionMethod">False Position Method</option>
-            <option value="newtonRaphsonMethod" selected>Newton Raphson Method</option>
+            <option value="newtonRaphsonMethod">Newton Raphson Method</option>
             <option value="secantMethod">Secant Method</option>
-            <option value="methodofSuccessiveSubstitution">Method of Successive Substitution</option>
+            <option value="methodofSuccessiveSubstitution" selected>Method of Successive Substitution</option>
           </select>
         </div>
 
         <div class="col-lg-6 text-start">
           <label for="equation" class="form-label mt-2 mb-0 fw-bold">
-            Give the Equation
+            Give the Auxiliary Function
           </label>
           <input 
               type="text"
               class="form-control col-11" 
               id="equation"
-              placeholder="x^3 - 3x + 1"
+              placeholder="(x^3)/3 + (1/3)"
               v-model="equation"
               required
             >
@@ -101,14 +101,6 @@
           id="errorTolerance"
           required
         >
-        &nbsp;w/ Slope Threshold&nbsp;
-        <input 
-          type="number" 
-          v-model="slopeThreshold" 
-          class="longer-places-input p-0 form-control" 
-          id="slopeThreshold"
-          required
-        >
       </div>
 
       <div class="mt-3 mb-3 row d-flex justify-content-around">
@@ -123,34 +115,36 @@
       </div>
     </div>
     <p class="text-start mt-4">
-      Newton Raphson Method: SM(f(x), f'(x), X0, Ɛ, 𝛿, maxiter)<br>
+      Method of Successive Substitution: MOSS(f(x), X0, Ɛ, maxiter)<br>
       <br>
       For: Nonlinear Equations<br>
-      Brief Description: Is one of the fastest, most accurate, and simplest
-      iterative algorithms, but does not always converge <br>
+      Brief Description: Is one of the fastest and simplest iterative
+      algorithms but does not always converge<br>
       Comparison with Other Methods: Is one of the fastest and simplest<br>
       <br>
       Legend:<br>
       xCurr = current estimate<br>
       xPrev = previous estimate<br>
-      initialGuess = initial Guess<br>
+      initialGuess = initial guess<br>
       Ɛ = error tolerance<br>
-      𝛿 = slope threshold<br>
+      ∆ = relative error<br>
       maxiter = max iteration<br>
       iter = current iteration<br>
       <br>
       Pseudocode:<br>
       float xPrev = initialGuess<br>
-      float xCurr = xPrev - (f(xPrev) / f'(xPrev)) (iteration 1)<br>
+      float xCurr = func(xPrev) (iteration 1)<br>
+      float ∆ = 0<br>
       iter = 2<br>
       <br>
       repeat<br>
         &emsp;xPrev = xCurr<br>
-        &emsp;xCurr = xPrev - (f(xPrev) / f'(xPrev))<br>
+        &emsp;xCurr = func(xPrev)<br>
+        &emsp;∆ = xPrev - xCurr<br>
         &emsp;if f(xCurr) === 0<br>
           &emsp;&emsp;print(xCurr + " is the exact solution")<br>
-        &emsp;if |f'(xCurr)| &lt; 𝛿<br>
-          &emsp;&emsp;print(`|f'(${xCurr})| &lt; ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`)<br>
+        &emsp;if |∆| &lt; Ɛ<br>
+          &emsp;&emsp;print(`∆${iter} = ${relError} has become lower than Ɛ ${computedErrorTolerance}, X${iter} = ${xCurr} is the final estimate we've reached`)<br>
         &emsp;iter++<br>
       until |xCurr - xPrev| &lt; Ɛ or iter &gt; maxiter<br>
     </p>
@@ -158,16 +152,14 @@
 </template>
 
 <script>
-import nerdamer from 'nerdamer';
-
 export default {
-  name: 'NewtonRaphsonMethod',
+  name: 'methodofSuccessiveSubstitution',
   props: {
 
   },
   data () {
     return {
-      numMethod: 'newtonRaphsonMethod',
+      numMethod: 'methodofSuccessiveSubstitution',
       equation: '',
       inputErrorTolerance: false,
       randomGuess: false,
@@ -175,7 +167,6 @@ export default {
       maxiter: 100,
       correctDigits: 4,
       errorTolerance: 0.0001,
-      slopeThreshold: 0.00000000000001,
       estimates: [],
       summary: [],
       solution: [],
@@ -197,39 +188,12 @@ export default {
       return str.split("-")[1] || 0;
     },
     randomizeGuess () {
-      const derivFunc = this.derivEq.buildFunction();
-
-      while (derivFunc(this.initialGuess) === 0 && this.initialGuess < 5) {
-        this.initialGuess++;
-      }
-
-      if (derivFunc(this.initialGuess) === 0) {
-        this.initialGuess = 0;
-        while (derivFunc(this.initialGuess) === 0 && this.initialGuess > -5) {
-          this.initialGuess--;
-        }
-      }
-
-      if (derivFunc(this.initialGuess) === 0) {
-        this.initialGuess = 6;
-        while (derivFunc(this.initialGuess) === 0 && this.initialGuess < 15) {
-          this.initialGuess++;
-        }
-      }
-
-      if (derivFunc(this.initialGuess) === 0) {
-        this.initialGuess = -6;
-        while (derivFunc(this.initialGuess) === 0 && this.initialGuess > -15) {
-          this.initialGuess--;
-        }
-      }
-
-      if (derivFunc(this.initialGuess) === 0 || this.initialGuess < -15 || this.initialGuess > 15) throw new Error();
+      this.initialGuess += Math.floor(Math.random() * 5) * ((-1) ** (Math.floor(Math.random() * 2) + 1));
     },
     shortenDecimal (num) {
       return parseFloat(num.toFixed(this.correctDigits));
     },
-    async handleCalculate () {
+    handleCalculate () {
       this.estimates = [];
       this.summary = [];
       this.solution = [];
@@ -239,79 +203,60 @@ export default {
       const correctDigits = this.correctDigits;
 
       const correctedEq = this.correctedEq;
-      const derivEq = this.derivEq;
+      const initialGuess = this.initialGuess;
       const computedErrorTolerance = this.computedErrorTolerance;
-      const slopeThreshold = this.slopeThreshold;
       const maxiter = this.maxiter;
 
       const shortenDecimal = this.shortenDecimal;
 
       const func = this.func;
-      const derivFunc = this.derivEq.buildFunction();
 
       if (randomGuess) {
-        try {
-          this.initialGuess = 1;
-          this.randomizeGuess();
-        } catch (e) {
-          this.estimates.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
-          this.summary.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
-          this.solution.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
-          this.answer = 'Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess';
-          this.handleEstimates();
-          return;
-        }
-      } else {
-        if (derivFunc(initialGuess) === 0) {
-          this.estimates.push(`Substituting ${initialGuess} to ${this.derivEq} results in 0, you can try a different guess`);
-          this.summary.push(`Substituting ${initialGuess} to ${this.derivEq} results in 0, you can try a different guess`);
-          this.solution.push(`Substituting ${initialGuess} to ${this.derivEq} results in 0, you can try a different guess`);
-          this.answer = `Substituting ${initialGuess} to ${this.derivEq} results in 0, you can try a different guess`;
-          this.handleEstimates();
-          return;
-        }
+        this.initialGuess = 1;
+        this.randomizeGuess();
       }
 
-      const initialGuess = this.initialGuess;
-
       let xPrev = initialGuess;
-      let xCurr = shortenDecimal(xPrev - (shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev))));
+      let xCurr = shortenDecimal(func(xPrev));
+      let relError = 0;
 
+      this.estimates.push(`MOSS(f(x), X0, Ɛ, maxiter) -> MOSS(${this.toPrintEq}, ${initialGuess}, ${computedErrorTolerance}, ${maxiter})`);
+      this.estimates.push(`X0 = ${xPrev}`);
       this.estimates.push(`X1 = ${xCurr}`);
 
-      this.summary.push(`NM(f(x), f'(x), X0, Ɛ, 𝛿, maxiter) -> NM(${this.toPrintEq}, ${derivEq}, ${initialGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
-      this.summary.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-      this.summary.push(`X1 <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
+      this.summary.push(`MOSS(f(x), X0, Ɛ, maxiter) -> MOSS(${this.toPrintEq}, ${initialGuess}, ${computedErrorTolerance}, ${maxiter})`);
+      this.summary.push(`X0 = ${xPrev}`);
+      this.summary.push(`f(X0) = ${xCurr}`);
       this.summary.push(`X1 = ${xCurr}`);
 
-      this.solution.push(`NM(f(x), f'(x), X0, Ɛ, 𝛿, maxiter) -> NM(${this.toPrintEq}, ${derivEq}, ${initialGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
-      this.solution.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-      this.solution.push(`X1 <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
-      this.solution.push(`X1 <- ${xPrev} - (${shortenDecimal(shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev)))})`);
+      this.solution.push(`MOSS(f(x), X0, Ɛ, maxiter) -> MOSS(${this.toPrintEq}, ${initialGuess}, ${computedErrorTolerance}, ${maxiter})`);
+      this.solution.push(`X0 = ${xPrev}`);
+      this.solution.push(`f(X0) = ${xCurr}`);
       this.solution.push(`X1 = ${xCurr}`);
 
       let iter = 2;
 
       do {
         xPrev = xCurr;
-        xCurr = shortenDecimal(xPrev - (shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev))));
+        xCurr = shortenDecimal(func(xPrev));
+        relError = shortenDecimal(xPrev - shortenDecimal(func(xPrev)));
         
         this.estimates.push(`X${iter} = ${xCurr}`);
 
-        this.summary.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-        this.summary.push(`X${iter} <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
-        this.summary.push(`X${iter} = ${xCurr}`);
-
-        this.solution.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-        this.solution.push(`X${iter} <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
-        this.solution.push(`X${iter} <- ${xPrev} - (${shortenDecimal(shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev)))})`);
+        this.solution.push(`X${iter} <- f(${xPrev})`);
         this.solution.push(`X${iter} = ${xCurr}`);
+        this.summary.push(`∆${iter} <- ${xPrev} - f(${xPrev})`);
+        this.summary.push(`∆${iter} = ${relError}`);
+
+        this.solution.push(`X${iter} <- f(${xPrev})`);
+        this.solution.push(`X${iter} = ${xCurr}`);
+        this.solution.push(`∆${iter} <- ${xPrev} - f(${xPrev})`);
+        this.solution.push(`∆${iter} <- ${xPrev} - ${shortenDecimal(func(xPrev))}`);
+        this.solution.push(`∆${iter} = ${relError}`);
 
         if (func(xCurr) === 0) {
           this.estimates.push(`${xCurr} is the exact solution`);
-
           this.summary.push(`${xCurr} is the exact solution`);
-
           this.solution.push(`${xCurr} is the exact solution`);
           this.answer = `${xCurr} is the exact solution`;
 
@@ -319,19 +264,11 @@ export default {
           return;
         }
 
-        if (Math.abs(derivFunc(xCurr)) < slopeThreshold) {
-          // if (randomGuess) {
-          //   this.randomizeGuess();
-          //   this.handleCalculate();
-          // }
-          this.estimate.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
-          this.summary.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
-          this.solution.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
-
-          this.answer = `|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`;
-
-          this.handleEstimates();
-          return; 
+        if (Math.abs(relError) < computedErrorTolerance) {
+          this.estimates.push(`∆${iter} = ${relError} has become lower than Ɛ ${computedErrorTolerance}, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.summary.push(`∆${iter} = ${relError} has become lower than Ɛ ${computedErrorTolerance}, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.solution.push(`∆${iter} = ${relError} has become lower than Ɛ ${computedErrorTolerance}, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.answer = `∆${iter} = ${relError} has become lower than Ɛ ${computedErrorTolerance}, X${iter} = ${xCurr} is the final estimate we've reached`;
         }
         
         iter++;
@@ -394,9 +331,6 @@ export default {
       if (this.countDecimals(this.errorTolerance) > 14) this.errorTolerance = parseFloat(this.errorTolerance.toFixed(14));
 
       if (this.inputErrorTolerance) this.correctDigits = this.countDecimals(this.errorTolerance);
-    },
-    slopeThreshold () {
-      if (this.countDecimals(this.slopeThreshold) > 14) this.slopeThreshold = parseFloat(this.slopeThreshold.toFixed(14));
     }
   },
   computed: {
@@ -432,9 +366,6 @@ export default {
       }
 
       return eq;
-    },
-    derivEq () {
-      return nerdamer.diff(this.correctedEq, 'x').evaluate();
     }
   },
   mounted () {
