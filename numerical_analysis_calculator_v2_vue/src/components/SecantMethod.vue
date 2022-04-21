@@ -17,6 +17,7 @@
             <option value="newtonRaphsonMethod">Newton Raphson Method</option>
             <option value="secantMethod" selected>Secant Method</option>
             <option value="methodofSuccessiveSubstitution">Method of Successive Substitution</option>
+            <option value="mullersMethod">Muller's Method</option>
           </select>
         </div>
 

@@ -71,6 +71,7 @@
 
 <script>
 import { uuid } from 'vue-uuid';
+import VueMathjax from 'vue-mathjax-next';
 
 export default {
   name: 'SolutionAccordion',
@@ -84,6 +85,9 @@ export default {
     return {
       uuid: uuid.v4()
     }
+  },
+  components: {
+    'vue-mathjax': VueMathjax
   },
   computed: {
     printEstimates () {

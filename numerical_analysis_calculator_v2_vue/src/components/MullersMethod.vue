@@ -14,10 +14,10 @@
           >
             <option value="bisectionMethod">Bisection Method</option>
             <option value="falsePositionMethod">False Position Method</option>
-            <option value="newtonRaphsonMethod" selected>Newton Raphson Method</option>
+            <option value="newtonRaphsonMethod">Newton Raphson Method</option>
             <option value="secantMethod">Secant Method</option>
             <option value="methodofSuccessiveSubstitution">Method of Successive Substitution</option>
-            <option value="mullersMethod">Muller's Method</option>
+            <option value="mullersMethod" selected>Muller's Method</option>
           </select>
         </div>
 
@@ -41,25 +41,33 @@
           <input 
             class="form-check-input" 
             type="checkbox" 
-            v-model="randomGuess"
+            v-model="randomGuesses"
             value=""
-            id="checkRandomGuess"
+            id="checkRandomGuesses"
             required
           >
-          <label class="form-check-label" for="checkRandomGuess">
-            Random Guess
+          <label class="form-check-label" for="checkRandomGuesses">
+            Random Guesses
           </label>
         </div>
 
         &nbsp;or use&nbsp;
         <input 
           type="number" 
-          v-model="initialGuess" 
+          v-model="firstGuess" 
           class="guess-input p-0 form-control" 
-          id="initialGuess"
+          id="firstGuess"
           required
         >
-        &nbsp;as your Initial Guess
+        &nbsp;and&nbsp;
+        <input 
+          type="number" 
+          v-model="secondGuess" 
+          class="guess-input p-0 form-control" 
+          id="secondGuess"
+          required
+        >
+        &nbsp;as your Initial Guesses
       </div>
 
       <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
@@ -74,7 +82,7 @@
         &nbsp;and Solution correct up to&nbsp;
         <input 
           type="number" 
-          v-model="correctDigits" 
+          v-model="correctDigits"
           class="places-input p-0 form-control" 
           id="correctDigits"
           required
@@ -124,30 +132,34 @@
       </div>
     </div>
     <p class="text-start mt-4">
-      Newton Raphson Method: SM(f(x), f'(x), X0, Ɛ, 𝛿, maxiter)<br>
+      Secant Method: SM(f(x), X0, X1, Ɛ, 𝛿, maxiter)<br>
       <br>
       For: Nonlinear Equations<br>
-      Brief Description: Is one of the fastest, most accurate, and simplest
-      iterative algorithms, but does not always converge <br>
-      Comparison with Other Methods: Is one of the fastest and simplest<br>
+      Brief Description: Is one of the fastest iterative algorithms, but
+      does not always converge<br>
+      Comparison with Other Methods: Can be as fast as Newton-Raphson Method,
+      but exchanging simplicity with not needing to know the derivative
+      function<br>
       <br>
       Legend:<br>
       xCurr = current estimate<br>
-      xPrev = previous estimate<br>
-      initialGuess = initial guess<br>
+      xPrev1 = previous estimate<br>
+      xPrev2 = previous previous estimate<br>
       Ɛ = error tolerance<br>
       𝛿 = slope threshold<br>
       maxiter = max iteration<br>
       iter = current iteration<br>
       <br>
       Pseudocode:<br>
-      float xPrev = initialGuess<br>
-      float xCurr = xPrev - (f(xPrev) / f'(xPrev)) (iteration 1)<br>
-      iter = 2<br>
+      float xPrev2 = 0<br>
+      float xPrev1 = X1<br>
+      float xCurr = X0<br>
+      iter = 1<br>
       <br>
       repeat<br>
-        &emsp;xPrev = xCurr<br>
-        &emsp;xCurr = xPrev - (f(xPrev) / f'(xPrev))<br>
+        &emsp;xPrev2 = xPrev1<br>
+        &emsp;xPrev1 = xCurr<br>
+        &emsp;xCurr = xPrev1 - ((xPrev1 - xPrev2)(f(xPrev1)))/(f(xPrev1) - f(xPrev2))<br>
         &emsp;if f(xCurr) === 0<br>
           &emsp;&emsp;print(xCurr + " is the exact solution")<br>
         &emsp;if |f'(xCurr)| &lt; 𝛿<br>
@@ -159,20 +171,19 @@
 </template>
 
 <script>
-import nerdamer from 'nerdamer';
-
 export default {
-  name: 'NewtonRaphsonMethod',
+  name: 'MullersMethod',
   props: {
 
   },
   data () {
     return {
-      numMethod: 'newtonRaphsonMethod',
+      numMethod: 'mullersMethod',
       equation: '',
       inputErrorTolerance: false,
-      randomGuess: false,
-      initialGuess: 1,
+      randomGuesses: false,
+      firstGuess: 1,
+      secondGuess: 5,
       maxiter: 100,
       correctDigits: 4,
       errorTolerance: 0.0001,
@@ -198,40 +209,64 @@ export default {
       }
       return str.split("-")[1] || 0;
     },
-    randomizeGuess () {
-      const derivFunc = this.derivEq.buildFunction();
+    randomizeGuesses () {
+      this.firstGuess = 1;
+      this.secondGuess = 5;
 
-      while (derivFunc(this.initialGuess) === 0 && this.initialGuess < 5) {
-        this.initialGuess++;
+      let func = this.func;
+
+      let a = 1;
+      let b = 5;
+
+      while (func(a) === func(b) && b < 15) {
+        this.secondGuess++;
+        b++;
       }
 
-      if (derivFunc(this.initialGuess) === 0) {
-        this.initialGuess = 0;
-        while (derivFunc(this.initialGuess) === 0 && this.initialGuess > -5) {
-          this.initialGuess--;
-        }
+      while (func(a) === func(b) && a > -15) {
+        this.firstGuess--;
+        a--;
       }
 
-      if (derivFunc(this.initialGuess) === 0) {
-        this.initialGuess = 6;
-        while (derivFunc(this.initialGuess) === 0 && this.initialGuess < 15) {
-          this.initialGuess++;
-        }
+      while (func(a) === func(b) && b < 30) {
+        this.secondGuess++;
+        b++;
       }
 
-      if (derivFunc(this.initialGuess) === 0) {
-        this.initialGuess = -6;
-        while (derivFunc(this.initialGuess) === 0 && this.initialGuess > -15) {
-          this.initialGuess--;
-        }
+      while (func(a) === func(b) && a > -30) {
+        this.firstGuess--;
+        a--;
       }
 
-      if (derivFunc(this.initialGuess) === 0 || this.initialGuess < -15 || this.initialGuess > 15) throw new Error();
+      let firstRand = a - Math.floor(Math.random() * 5);
+      let secondRand = b + Math.floor(Math.random() * 5);
+
+      let randMaxiter = 0;
+
+      while (func(firstRand) === func(secondRand) || randMaxiter < 10) {
+        firstRand = a - Math.floor(Math.random() * 5);
+        secondRand = b + Math.floor(Math.random() * 5);
+
+        this.firstGuess = firstRand;
+        this.secondGuess = secondRand;
+
+        randMaxiter++;
+      }
+
+      if (func(firstRand) !== func(secondRand)) {
+        this.firstGuess = firstRand;
+        this.secondGuess = secondRand;
+      } else {
+        if (func(a) !== func(b)) {
+          this.firstGuess = a;
+          this.secondGuess = b;
+        } else throw new Error();
+      }
     },
     shortenDecimal (num) {
       return parseFloat(num.toFixed(this.correctDigits));
     },
-    async handleCalculate () {
+    handleCalculate () {
       this.prevCorrectDigits = this.correctDigits;
 
       this.estimates = [];
@@ -239,11 +274,10 @@ export default {
       this.solution = [];
       this.answer = '';
 
-      const randomGuess = this.randomGuess;
+      const randomGuesses = this.randomGuesses;
       const correctDigits = this.correctDigits;
 
       const correctedEq = this.correctedEq;
-      const derivEq = this.derivEq;
       const computedErrorTolerance = this.computedErrorTolerance;
       const slopeThreshold = this.slopeThreshold;
       const maxiter = this.maxiter;
@@ -251,12 +285,12 @@ export default {
       const shortenDecimal = this.shortenDecimal;
 
       const func = this.func;
-      const derivFunc = this.derivEq.buildFunction();
 
-      if (randomGuess) {
+      if (randomGuesses) {
         try {
-          this.initialGuess = 1;
-          this.randomizeGuess();
+          this.firstGuess = 1;
+          this.secondGuess = 5;
+          this.randomizeGuesses();
         } catch (e) {
           this.estimates.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
           this.summary.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
@@ -266,49 +300,46 @@ export default {
           return;
         }
       } else {
-        if (derivFunc(this.initialGuess) === 0) {
-          this.estimates.push(`Substituting ${this.initialGuess} to ${this.derivEq} results in 0, you can try a different guess`);
-          this.summary.push(`Substituting ${this.initialGuess} to ${this.derivEq} results in 0, you can try a different guess`);
-          this.solution.push(`Substituting ${this.initialGuess} to ${this.derivEq} results in 0, you can try a different guess`);
-          this.answer = `Substituting ${this.initialGuess} to ${this.derivEq} results in 0, you can try a different guess`;
+        if (func(this.firstGuess) === func(this.secondGuess)) {
+          this.estimates.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
+          this.summary.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
+          this.solution.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
+
+          this.answer = `f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`;
           this.handleEstimates();
           return;
         }
       }
 
-      const initialGuess = this.initialGuess;
+      const firstGuess = this.firstGuess;
+      const secondGuess = this.secondGuess;
 
-      let xPrev = initialGuess;
-      let xCurr = shortenDecimal(xPrev - (shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev))));
+      let xPrev2 = 0;
+      let xPrev1 = secondGuess;
+      let xCurr = firstGuess;
 
-      this.estimates.push(`X1 = ${xCurr}`);
+      this.estimates.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
 
-      this.summary.push(`NM(f(x), f'(x), X0, Ɛ, 𝛿, maxiter) -> NM(${this.toPrintEq}, ${derivEq}, ${initialGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
-      this.summary.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-      this.summary.push(`X1 <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
-      this.summary.push(`X1 = ${xCurr}`);
+      this.summary.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
 
-      this.solution.push(`NM(f(x), f'(x), X0, Ɛ, 𝛿, maxiter) -> NM(${this.toPrintEq}, ${derivEq}, ${initialGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
-      this.solution.push(`X1 <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-      this.solution.push(`X1 <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
-      this.solution.push(`X1 <- ${xPrev} - (${shortenDecimal(shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev)))})`);
-      this.solution.push(`X1 = ${xCurr}`);
+      this.solution.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
 
-      let iter = 2;
+      let iter = 1;
 
       do {
-        xPrev = xCurr;
-        xCurr = shortenDecimal(xPrev - (shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev))));
+        xPrev2 = xPrev1;
+        xPrev1 = xCurr;
+        xCurr = shortenDecimal(shortenDecimal(xPrev1) - shortenDecimal(shortenDecimal(shortenDecimal(xPrev1 - xPrev2) * shortenDecimal(func(xPrev1))) / (shortenDecimal(func(xPrev1)) - shortenDecimal(func(xPrev2)))));
         
         this.estimates.push(`X${iter} = ${xCurr}`);
 
-        this.summary.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-        this.summary.push(`X${iter} <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
+        this.summary.push(`X${iter} <- ${xPrev1} - ((${xPrev1} - ${xPrev2})(f(${xPrev1})))/(f(${xPrev1}) - f(${xPrev2}))`);
         this.summary.push(`X${iter} = ${xCurr}`);
 
-        this.solution.push(`X${iter} <- ${xPrev} - (f(${xPrev}) / f'(${xPrev}))`);
-        this.solution.push(`X${iter} <- ${xPrev} - (${shortenDecimal(func(xPrev))} / ${shortenDecimal(derivFunc(xPrev))})`);
-        this.solution.push(`X${iter} <- ${xPrev} - (${shortenDecimal(shortenDecimal(func(xPrev)) / shortenDecimal(derivFunc(xPrev)))})`);
+        this.solution.push(`X${iter} <- ${xPrev1} - ((${xPrev1} - ${xPrev2})(f(${xPrev1})))/(f(${xPrev1}) - f(${xPrev2}))`);
+        this.solution.push(`X${iter} <- ${xPrev1} - ((${shortenDecimal(xPrev1 - xPrev2)})(${shortenDecimal(func(xPrev1))}))/(${shortenDecimal(func(xPrev1))} - ${shortenDecimal(func(xPrev2))})`);
+        this.solution.push(`X${iter} <- ${xPrev1} - (${shortenDecimal(xPrev1 - xPrev2) * shortenDecimal(func(xPrev1))})/(${shortenDecimal(func(xPrev1)) - shortenDecimal(func(xPrev2))})`);
+        this.solution.push(`X${iter} <- ${xPrev1} - ${shortenDecimal(shortenDecimal(shortenDecimal(xPrev1 - xPrev2) * shortenDecimal(func(xPrev1))) / shortenDecimal(shortenDecimal(func(xPrev1)) - shortenDecimal(func(xPrev2))))}`);
         this.solution.push(`X${iter} = ${xCurr}`);
 
         if (func(xCurr) === 0) {
@@ -323,25 +354,24 @@ export default {
           return;
         }
 
-        if (Math.abs(derivFunc(xCurr)) < slopeThreshold) {
+        if (Math.abs(func(xCurr) - func(xPrev1)) < slopeThreshold) {
           // if (randomGuess) {
           //   this.randomizeGuess();
           //   this.handleCalculate();
           // }
-          this.estimate.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
-          this.summary.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
-          this.solution.push(`|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
-
-          this.answer = `|f'(${xCurr})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`;
+          this.estimates.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.summary.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.solution.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.answer = `|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`;
 
           this.handleEstimates();
           return; 
         }
         
         iter++;
-      } while (Math.abs(xCurr - xPrev) >= computedErrorTolerance && iter <= maxiter)
+      } while (Math.abs(xCurr - xPrev1) >= computedErrorTolerance && iter <= maxiter)
 
-      if (iter > maxiter && Math.abs(xCurr - xPrev) < computedErrorTolerance) {
+      if (iter > maxiter && Math.abs(xCurr - xPrev1) < errorTolerance) {
         // if (randomGuess) {
         //   this.randomizeGuess();
         //   this.handleCalculate();
@@ -369,8 +399,9 @@ export default {
     handleReset () {
       this.equation = '';
       this.inputErrorTolerance = false;
-      this.randomGuess = false;
-      this.initialGuess = 1;
+      this.randomGuesses = false;
+      this.firstGuess = 1;
+      this.secondGuess = 5;
       this.maxiter = 100;
       this.correctDigits = 4;
       this.errorTolerance = 0.0001;
@@ -395,11 +426,15 @@ export default {
       document.getElementById('correctDigits').disabled = this.inputErrorTolerance;
       document.getElementById('errorTolerance').disabled = !this.inputErrorTolerance;
     },
-    initialGuess () {
-      this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.initialGuess));
+    firstGuess () {
+      this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.firstGuess));
     },
-    randomGuess () {
-      document.getElementById('initialGuess').disabled = this.randomGuess;
+    secondGuess () {
+      this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.secondGuess));
+    },
+    randomGuesses () {
+      document.getElementById('firstGuess').disabled = this.randomGuesses;
+      document.getElementById('secondGuess').disabled = this.randomGuesses;
     },
     maxiter () {
       if (this.maxiter !== '') this.maxiter = Math.floor(this.maxiter);
@@ -456,9 +491,6 @@ export default {
       }
 
       return eq;
-    },
-    derivEq () {
-      return nerdamer.diff(this.correctedEq, 'x').evaluate();
     }
   },
   mounted () {
