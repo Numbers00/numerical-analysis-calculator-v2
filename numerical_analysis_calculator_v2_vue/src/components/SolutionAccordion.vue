@@ -54,7 +54,7 @@
     <div id="collapseFour" class="accordion-collapse collapse show" aria-labelledby="headingFour" data-bs-parent="#helperAccordion">
       <div class="accordion-body text-start">
         <template v-for="(line, index) in printSolution">
-          <p 
+          <p
             v-if="line.includes('=')" 
             :key="index.uuid" 
             class="lead fw-bold"
@@ -71,6 +71,7 @@
 
 <script>
 import { uuid } from 'vue-uuid';
+import VueMathjax from 'vue-mathjax-next';
 
 export default {
   name: 'SolutionAccordion',
@@ -84,6 +85,9 @@ export default {
     return {
       uuid: uuid.v4()
     }
+  },
+  components: {
+    'vue-mathjax': VueMathjax
   },
   computed: {
     printEstimates () {
@@ -107,6 +111,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+
+#collapseFour .accordion-body {
+  text-align: left !important;
+}
 
 .accordion-item {
   border: none;

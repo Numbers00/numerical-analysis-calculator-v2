@@ -1,4 +1,6 @@
 apturl==0.5.2
+asgiref==3.5.0
+backports.zoneinfo==0.2.1
 blinker==1.4
 catfish==1.4.13
 certifi==2019.11.28
@@ -13,6 +15,7 @@ defer==1.0.6
 distlib==0.3.4
 distro==1.4.0
 distro-info===0.23ubuntu1
+Django==4.0.4
 entrypoints==0.3
 filelock==3.6.0
 httplib2==0.14.0
@@ -51,6 +54,7 @@ SecretStorage==2.3.1
 sgt-launcher==0.2.5
 simplejson==3.16.0
 six==1.14.0
+sqlparse==0.4.2
 systemd-python==234
 ubuntu-advantage-tools==27.5
 ubuntu-drivers-common==0.0.0

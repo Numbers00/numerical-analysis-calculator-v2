@@ -162,9 +162,6 @@ import nerdamer from 'nerdamer';
 
 export default {
   name: 'NewtonRaphsonMethod',
-  props: {
-
-  },
   data () {
     return {
       numMethod: 'newtonRaphsonMethod',
