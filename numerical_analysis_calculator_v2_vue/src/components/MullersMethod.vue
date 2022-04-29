@@ -59,7 +59,7 @@
           id="firstGuess"
           required
         >
-        &nbsp;and&nbsp;
+        &nbsp;,&nbsp;
         <input 
           type="number" 
           v-model="secondGuess" 
@@ -67,7 +67,14 @@
           id="secondGuess"
           required
         >
-        &nbsp;as your Initial Guesses
+        &nbsp;and&nbsp;
+        <input 
+          type="number" 
+          v-model="secondGuess" 
+          class="guess-input p-0 form-control" 
+          id="thirdGuess"
+          required
+        >
       </div>
 
       <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
@@ -171,6 +178,8 @@
 </template>
 
 <script>
+import nerdamer from 'nerdamer';
+
 export default {
   name: 'MullersMethod',
   props: {
@@ -183,7 +192,8 @@ export default {
       inputErrorTolerance: false,
       randomGuesses: false,
       firstGuess: 1,
-      secondGuess: 5,
+      secondGuess: 2,
+      thirdGuess: 3,
       maxiter: 100,
       correctDigits: 4,
       errorTolerance: 0.0001,
@@ -286,49 +296,60 @@ export default {
 
       const func = this.func;
 
-      if (randomGuesses) {
-        try {
-          this.firstGuess = 1;
-          this.secondGuess = 5;
-          this.randomizeGuesses();
-        } catch (e) {
-          this.estimates.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
-          this.summary.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
-          this.solution.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
-          this.answer = 'Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess';
-          this.handleEstimates();
-          return;
-        }
-      } else {
-        if (func(this.firstGuess) === func(this.secondGuess)) {
-          this.estimates.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
-          this.summary.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
-          this.solution.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
+      // if (randomGuesses) {
+      //   try {
+      //     this.firstGuess = 1;
+      //     this.secondGuess = 5;
+      //     this.randomizeGuesses();
+      //   } catch (e) {
+      //     this.estimates.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
+      //     this.summary.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
+      //     this.solution.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
+      //     this.answer = 'Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess';
+      //     this.handleEstimates();
+      //     return;
+      //   }
+      // } else {
+      //   if (func(this.firstGuess) === func(this.secondGuess)) {
+      //     this.estimates.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
+      //     this.summary.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
+      //     this.solution.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
 
-          this.answer = `f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`;
-          this.handleEstimates();
-          return;
-        }
-      }
+      //     this.answer = `f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`;
+      //     this.handleEstimates();
+      //     return;
+      //   }
+      // }
 
       const firstGuess = this.firstGuess;
       const secondGuess = this.secondGuess;
+      const thirdGuess = this.thirdGuess;
 
-      let xPrev2 = 0;
+      let xPrev3 = 0;
+      let xPrev2 = thirdGuess;
       let xPrev1 = secondGuess;
       let xCurr = firstGuess;
 
-      this.estimates.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
+      xPrev3 = xPrev2;
+      xPrev2 = xPrev1;
+      xPrev1 = xCurr;
 
-      this.summary.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
+      let parabola = nerdamer('simplify(c1(x-xPrev2)(x-xPrev3)/(xPrev1-xPrev2)(xPrev1-xPrev3) + c2(x-xPrev1)(x-xPrev3)/(xPrev2-xPrev1)(xPrev2-xPrev3) + c3(x-xPrev1)(x-xPrev2)/(xPrev3-xPrev1)(xPrev3-xPrev2))', {c1:func(xPrev1), c2:func(xPrev2), c3:func(xPrev3), xPrev1:xPrev1, xPrev2:xPrev2, xPrev3:xPrev3});
+      console.log(parabola.toString());
 
-      this.solution.push(`SM(f(x), X0, X1, Ɛ, 𝛿, maxiter) -> SM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${computedErrorTolerance}, ${slopeThreshold}, ${maxiter})`);
+      this.estimates.push(`MM(f(x), X0, X1, X2, Ɛ, maxiter) -> MM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${thirdGuess}, ${computedErrorTolerance}, ${maxiter})`);
+
+      this.summary.push(`MM(f(x), X0, X1, X2, Ɛ, maxiter) -> MM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${thirdGuess}, ${computedErrorTolerance}, ${maxiter})`);
+
+      this.solution.push(`MM(f(x), X0, X1, X2, Ɛ, maxiter) -> MM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${thirdGuess}, ${computedErrorTolerance}, ${maxiter})`);
 
       let iter = 1;
 
       do {
+        xPrev3 = xPrev2;
         xPrev2 = xPrev1;
         xPrev1 = xCurr;
+
         xCurr = shortenDecimal(shortenDecimal(xPrev1) - shortenDecimal(shortenDecimal(shortenDecimal(xPrev1 - xPrev2) * shortenDecimal(func(xPrev1))) / (shortenDecimal(func(xPrev1)) - shortenDecimal(func(xPrev2)))));
         
         this.estimates.push(`X${iter} = ${xCurr}`);
@@ -462,6 +483,11 @@ export default {
     func () {
       return new Function('x', `return ${this.correctedEq}`);
     },
+    lagrangeFunc () {
+      const func = this.func;
+      const shortenDecimal = this.shortenDecimal;
+      return new Function('x', `return func(xPrev1)(x-xPrev2)(x-xPrev3)/(xPrev1-xPrev2)(xPrev1-xPrev3) + func(xPrev2)(x-xPrev1)(x-xPrev3)/(xPrev2-xPrev1)(xPrev2-xPrev3) + func(xPrev3)(x-xPrev1)(x-xPrev2)/(xPrev3-xPrev1)(xPrev3-xPrev2)`);
+    },
     computedErrorTolerance () {
       if (!this.inputErrorTolerance) return 1 / (10 ** this.correctDigits);
       return this.errorTolerance;
@@ -491,7 +517,7 @@ export default {
       }
 
       return eq;
-    }
+    },
   },
   mounted () {
     document.getElementById('errorTolerance').disabled = true;
