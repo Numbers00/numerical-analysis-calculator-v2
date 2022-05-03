@@ -1,5 +1,5 @@
 <template>
-<div class="container-fluid row d-flex justify-content-between px-0 mx-0">
+<div class="container row d-flex justify-content-between px-0 mx-0">
   <div class="col-lg-6 rounded ps-0">
     <solution-accordion 
       :estimates="estimates"
