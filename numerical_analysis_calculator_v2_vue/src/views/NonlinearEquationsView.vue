@@ -77,6 +77,9 @@ export default {
     MethodofSuccessiveSubstitution,
     MullersMethod
   },
+  props: {
+    navNumMethod: String
+  },
   methods: {
     changeNumMethod (numMethod) {
       this.numMethod = numMethod;
@@ -86,6 +89,12 @@ export default {
       this.summary = estimates.summary;
       this.solution = estimates.solution;
       this.answer = estimates.answer;
+    }
+  },
+  watch: {
+    navNumMethod () {
+      console.log(this.navNumMethod);
+      this.changeNumMethod(this.navNumMethod);
     }
   }
 }

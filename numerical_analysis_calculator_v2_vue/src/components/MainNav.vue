@@ -20,12 +20,12 @@
                 Nonlinear Equations
               </a>
               <ul class="dropdown-menu dropdown-submenu">
-                <li><a class="dropdown-item" href="#">Bisection Method</a></li>
-                <li><a class="dropdown-item" href="#">False Position Method</a></li>
-                <li><a class="dropdown-item" href="#">Newton Raphson Method</a></li>
-                <li><a class="dropdown-item" href="#">Secant Method</a></li>
-                <li><a class="dropdown-item" href="#">MOSS</a></li>
-                <li><a class="dropdown-item" href="#">Muller's Method</a></li>
+                <li><a class="dropdown-item" @click="$router.push({ name: 'nonlinear_equations', params: {navNumMethod: 'bisectionMethod'}})">Bisection Method</a></li>
+                <li><a class="dropdown-item" @click="$router.push({ name: 'nonlinear_equations', params: {navNumMethod: 'falsePositionMethod'}})">False Position Method</a></li>
+                <li><a class="dropdown-item" @click="$router.push({ name: 'nonlinear_equations', params: {navNumMethod: 'newtonRaphsonMethod'}})">Newton Raphson Method</a></li>
+                <li><a class="dropdown-item" @click="$router.push({ name: 'nonlinear_equations', params: {navNumMethod: 'secantMethod'}})">Secant Method</a></li>
+                <li><a class="dropdown-item" @click="$router.push({ name: 'nonlinear_equations', params: {navNumMethod: 'MOSS'}})">MOSS</a></li>
+                <li><a class="dropdown-item" @click="$router.push({ name: 'nonlinear_equations', params: {navNumMethod: 'mullersMethod'}})">Muller's Method</a></li>
               </ul>
             </li>
             <li>
