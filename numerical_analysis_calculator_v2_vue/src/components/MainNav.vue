@@ -43,7 +43,7 @@
               </a>
               <ul class="dropdown-menu dropdown-submenu">
                 <li><a class="dropdown-item" href="#">Method of Undetermined Coefficients</a></li>
-                <li><a class="dropdown-item" href="#">Euler Form</a></li>
+                <li><a class="dropdown-item" href="#">Euler Form Method</a></li>
               </ul>
             </li>
             <li>
@@ -51,10 +51,10 @@
                 Numerical Integration
               </a>
               <ul class="dropdown-menu dropdown-submenu">
-                <li><a class="dropdown-item" href="#">Riemann Sum</a></li>
-                <li><a class="dropdown-item" href="#">Trapezoidal Rule</a></li>
-                <li><a class="dropdown-item" href="#">Simpson's 1/3 Rule</a></li>
-                <li><a class="dropdown-item" href="#">Simpson's 3/8 Rule</a></li>
+                <li><a class="dropdown-item" @click="$router.push({ name: 'numerical_integration', params: {navNumMethod: 'riemannSumMethod'}})">Riemann Sum Method</a></li>
+                <li><a class="dropdown-item" @click="$router.push({ name: 'numerical_integration', params: {navNumMethod: 'trapezoidalRuleMethod'}})">Trapezoidal Rule Method</a></li>
+                <li><a class="dropdown-item" @click="$router.push({ name: 'numerical_integration', params: {navNumMethod: 'simpsons13RuleMethod'}})">Simpson's 1/3 Rule Method</a></li>
+                <li><a class="dropdown-item" @click="$router.push({ name: 'numerical_integration', params: {navNumMethod: 'simpsons38RuleMethod'}})">Simpson's 3/8 Rule Method</a></li>
               </ul>
             </li>
           </ul>
