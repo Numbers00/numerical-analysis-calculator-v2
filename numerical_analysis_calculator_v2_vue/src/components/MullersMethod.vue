@@ -132,20 +132,19 @@
       </div>
     </div>
     <p class="text-start mt-4">
-      Muller's Method: SM(f(x), X0, X1, X2, Ɛ, maxiter)<br>
+      Secant Method: SM(f(x), X0, X1, Ɛ, 𝛿, maxiter)<br>
       <br>
       For: Nonlinear Equations<br>
       Brief Description: Is one of the fastest iterative algorithms, but
       does not always converge<br>
-      Comparison with Other Methods: Is faster than Secant Method but still slower than 
-      Newton-Raphson Method, can be computationally-expensive both on the computer and
-      when done by hand<br>
+      Comparison with Other Methods: Is faster than Secant Method, but is 
+      still slower than Newton-Rhapson Method and can be computationally-expensive
+      both on the computer and when done by hand<br>
       <br>
       Legend:<br>
       xCurr = current estimate<br>
       xPrev1 = previous estimate<br>
       xPrev2 = previous previous estimate<br>
-      xPrev3 = previous previous previous estimate<br>
       Ɛ = error tolerance<br>
       maxiter = max iteration<br>
       iter = current iteration<br>
@@ -161,7 +160,12 @@
         &emsp;xPrev3 = xPrev2<br>
         &emsp;xPrev2 = xPrev1<br>
         &emsp;xPrev1 = xCurr<br>
-        &emsp;xCurr = (func(xPrev1)(((x-xPrev2)(x-xPrev3))/((xPrev1-xPrev2)(xPrev1-xPrev3))) + func(xPrev2)(((x-xPrev1)(x-xPrev3))/((xPrev2-xPrev1)(xPrev2-xPrev3))) + func(xPrev3)(((x-xPrev1)(x-xPrev2))/((xPrev3-xPrev1)(xPrev3-xPrev2))))<br>
+        &emsp;parabola = func(xPrev2)(((x-xPrev2)(x-xPrev3))/((xPrev1-xPrev2)(xPrev1-xPrev3))) + func(xPrev2)(((x-xPrev1)(x-xPrev3))/((xPrev2-xPrev1)(xPrev2-xPrev3))) + func(xPrev3)(((x-xPrev1)(x-xPrev2))/((xPrev3-xPrev1)(xPrev3-xPrev2)))<br>
+        &emsp;strIntercepts = solve(parabola,x)<br>
+        &emsp;if (strIntercepts[0].includes('i') || strIntercepts[1].includes('i')) print('one or more roots is/are imaginary roots, this calculator cannot proceed any further, please try another guess')<br>
+        &emsp;else xIntercepts = strIntercepts.map(e => Number(solve(e)))<br>
+        &emsp;if (Math.abs(func(xIntercepts[0])) &lt; Math.abs(func(xIntercepts[1]))) xCurr = xIntercepts[0]<br>
+        &emsp;else xCurr = xIntercepts[1]<br>
         &emsp;if f(xCurr) === 0<br>
           &emsp;&emsp;print(xCurr + " is the exact solution")<br>
         &emsp;iter++<br>
@@ -215,14 +219,14 @@ export default {
       for (let i = 0; i < arr.length; i++) {
         for (let j = i+1; j < arr.length; j++) {
           if (arr[i] !== arr[j]) return false;
-        } 
+        }
       }
       return true;
     },
     randomizeGuesses () {
       this.firstGuess = 1;
-      this.secondGuess = 3;
-      this.thirdGuess = 5;
+      this.thirdGuess = 3;
+      this.secondGuess = 5;
 
       let func = this.func;
       let checkEquality = this.checkEquality;
@@ -233,7 +237,7 @@ export default {
 
       while (checkEquality([a,b,c]) && c < 15) {
         this.thirdGuess++;
-        c++;
+        b++;
       }
 
       while (checkEquality([a,b,c]) && a > -15) {
@@ -243,16 +247,13 @@ export default {
 
       while (checkEquality([a,b,c]) && c < 30) {
         this.thirdGuess++;
-        c++;
+        b++;
       }
 
       while (checkEquality([a,b,c]) && a > -30) {
         this.firstGuess--;
         a--;
       }
-
-      console.log([a,b,c])
-      console.log(checkEquality([a,b,c]))
 
       let firstRand = a - Math.floor(Math.random() * 5);
       let secondRand = Math.round(Math.random()) === 0 ? b - Math.floor(Math.random() * 5) : b + Math.ceil(Math.random() * 5);
@@ -275,12 +276,10 @@ export default {
       if (!checkEquality([firstRand,secondRand,thirdRand])) {
         this.firstGuess = firstRand;
         this.secondGuess = secondRand;
-        this.thirdGuess = thirdRand;
       } else {
         if (!checkEquality([a,b,c])) {
           this.firstGuess = a;
           this.secondGuess = b;
-          this.thirdRand = c;
         } else throw new Error();
       }
     },
@@ -309,8 +308,7 @@ export default {
       if (randomGuesses) {
         try {
           this.firstGuess = 1;
-          this.secondGuess = 3;
-          this.thirdGuess = 5;
+          this.secondGuess = 5;
           this.randomizeGuesses();
         } catch (e) {
           this.estimates.push('Could not find an eligible initial guess for this equation, you can try manually inputting an initial guess');
@@ -321,12 +319,12 @@ export default {
           return;
         }
       } else {
-        if (func(this.firstGuess) === func(this.secondGuess)) {
-          this.estimates.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
-          this.summary.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
-          this.solution.push(`f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`);
+        if (this.checkEquality([this.firstGuess,this.secondGuess,this.thirdGuess])) {
+          this.estimates.push(`two or all three initial guesses project to the same y value, you can try a different guess`);
+          this.summary.push(`two or all three initial guesses project to the same y value, you can try a different guess`);
+          this.solution.push(`two or all three initial guesses project to the same y value, you can try a different guess`);
 
-          this.answer = `f(${this.firstGuess}) = f(${this.secondGuess}), you can try a different guess`;
+          this.answer = `two or all three initial guesses project to the same y value, you can try a different guess`;
           this.handleEstimates();
           return;
         }
@@ -346,44 +344,46 @@ export default {
       this.solution.push(`MM(f(x), X0, X1, X2, Ɛ, maxiter) -> MM(${this.toPrintEq}, ${firstGuess}, ${secondGuess}, ${thirdGuess}, ${computedErrorTolerance}, ${maxiter})`);
 
       let iter = 1;
-      let imaginaries = 0;
+
+      let parabola = '';
+      let strIntercepts = '';
+      let xIntercepts = [];
 
       do {
         xPrev3 = xPrev2;
         xPrev2 = xPrev1;
         xPrev1 = xCurr;
 
-        let parabola = nerdamer('(c1(((x-xPrev2)(x-xPrev3))/((xPrev1-xPrev2)(xPrev1-xPrev3))) + c2(((x-xPrev1)(x-xPrev3))/((xPrev2-xPrev1)(xPrev2-xPrev3))) + c3(((x-xPrev1)(x-xPrev2))/((xPrev3-xPrev1)(xPrev3-xPrev2))))', {c1:shortenDecimal(func(xPrev1)), c2:shortenDecimal(func(xPrev2)), c3:shortenDecimal(func(xPrev3)), xPrev1:xPrev1, xPrev2:xPrev2, xPrev3:xPrev3});
-        let strXIntercepts = nerdamer('solve(parabola,x)', {parabola:parabola.toString()}).toString().slice(1,-1).split(',');
-        let xIntercepts = strXIntercepts.map(e => shortenDecimal(Number(nerdamer('e',{e:e}).evaluate().text())));
-        if (Math.abs(func(xIntercepts[0])) < Math.abs(func(xIntercepts[1]))) xCurr = xIntercepts[0];
-        else xCurr = xIntercepts[1];
-
-        if (strXIntercepts[0].includes('i') || strXIntercepts[1].includes('i')) {
+        parabola = nerdamer('(c1(((x-xPrev2)(x-xPrev3))/((xPrev1-xPrev2)(xPrev1-xPrev3))) + c2(((x-xPrev1)(x-xPrev3))/((xPrev2-xPrev1)(xPrev2-xPrev3))) + c3(((x-xPrev1)(x-xPrev2))/((xPrev3-xPrev1)(xPrev3-xPrev2))))', {c1:shortenDecimal(func(xPrev1)), c2:shortenDecimal(func(xPrev2)), c3:shortenDecimal(func(xPrev3)), xPrev1:xPrev1, xPrev2:xPrev2, xPrev3:xPrev3});
+        strIntercepts = nerdamer('solve(parabola,x)', {parabola:parabola.toString()}).toString().slice(1,-1).split(',');
+        console.log(strIntercepts)
+        if (strIntercepts[0].includes('i') || strIntercepts[1].includes('i')) {
           this.summary.push(`X${iter} <- ${parabola.toString()}`);
           this.solution.push(`X${iter} <- ${parabola.toString()}`);
-          if (strXIntercepts[0].includes('i') && !strXIntercepts[1].includes('i')) {
-            this.estimates.push(`root (1) ${strXIntercepts[0]} is an imaginary root, this calculator cannot proceed further, please try another guess`);
-            this.summary.push(`root (1) ${strXIntercepts[0]} is an imaginary root, this calculator cannot proceed further, please try another guess`);
-            this.solution.push(`root (1) ${strXIntercepts[0]} is an imaginary root, this calculator cannot proceed further, please try another guess`);
-          } else if (!strXIntercepts[0].includes('i') && strXIntercepts[1].includes('i')) {
-            this.estimates.push(`root (2) ${strXIntercepts[1]} is an imaginary root, this calculator cannot proceed further, please try another guess`);
-            this.summary.push(`root (2) ${strXIntercepts[1]} is an imaginary root, this calculator cannot proceed further, please try another guess`);
-            this.solution.push(`root (2) ${strXIntercepts[1]} is an imaginary root, this calculator cannot proceed further, please try another guess`);
-          } else if (strXIntercepts[0].includes('i') && strXIntercepts[1].includes('i')) {
-            this.estimates.push(`roots (1) ${strXIntercepts[0]} and (2) ${strXIntercepts[1]} are imaginary roots, this calculator cannot proceed further, please try another guess`);
-            this.summary.push(`roots (1) ${strXIntercepts[0]} and (2) ${strXIntercepts[1]} are imaginary roots, this calculator cannot proceed further, please try another guess`);
-            this.solution.push(`roots (1) ${strXIntercepts[0]} and (2) ${strXIntercepts[1]} are imaginary roots, this calculator cannot proceed further, please try another guess`);
+          if (strIntercepts[0].includes('i') && !strIntercepts[1].includes('i')) {
+            this.estimates.push(`root 1 ${strIntercepts[0]} is an imaginary root, this calculator cannot proceed any further, please try a different guess`);
+            this.summary.push(`root 1 ${strIntercepts[0]} is an imaginary root, this calculator cannot proceed any further, please try a different guess`);
+            this.solution.push(`root 1 ${strIntercepts[0]} is an imaginary root, this calculator cannot proceed any further, please try a different guess`);
+          } else if (!strIntercepts[0].includes('i') && strIntercepts[1].includes('i')) {
+            this.estimates.push(`root 2 ${strIntercepts[1]} is an imaginary root, this calculator cannot proceed any further, please try a different guess`);
+            this.summary.push(`root 2 ${strIntercepts[1]} is an imaginary root, this calculator cannot proceed any further, please try a different guess`);
+            this.solution.push(`root 2 ${strIntercepts[1]} is an imaginary root, this calculator cannot proceed any further, please try a different guess`);
+          } else if (strIntercepts[0].includes('i') && strIntercepts[1].includes('i')) {
+            this.estimates.push(`roots 1 ${strIntercepts[0]} and 2 ${strIntercepts[1]} are imaginary roots, this calculator cannot proceed any further, please try a different guess`);
+            this.summary.push(`roots 1 ${strIntercepts[0]} and 2 ${strIntercepts[1]} are imaginary roots, this calculator cannot proceed any further, please try a different guess`);
+            this.solution.push(`roots 1 ${strIntercepts[0]} and 2 ${strIntercepts[1]} are imaginary roots, this calculator cannot proceed any further, please try a different guess`);
           }
           this.handleEstimates();
-          break;
+          return;
         }
+
+        xIntercepts = strIntercepts.map(e => shortenDecimal(Number(nerdamer('e',{e:e}).evaluate().text())));
+        if (Math.abs(func(xIntercepts[0])) < Math.abs(func(xIntercepts[1]))) xCurr = xIntercepts[0];
+        else xCurr = xIntercepts[1];
         
         this.estimates.push(`X${iter} = ${xCurr}`);
-
         this.summary.push(`X${iter} <- ${parabola.toString()}`);
         this.summary.push(`X${iter} = ${xCurr}`);
-
         this.solution.push(`X${iter} <- ${parabola.toString()}`);
         this.solution.push(`X${iter} = ${xCurr}`);
 

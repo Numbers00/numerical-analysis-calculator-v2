@@ -59,19 +59,7 @@
           id="numPartitions"
           required
         >
-        &nbsp;Partitions
-      </div>
-
-      <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
-        w/ Partition Size decreasing by&nbsp;
-        <input 
-          type="number" 
-          v-model="divPartitionSize" 
-          class="partitions-input p-0 form-control"
-          id="divPartitionSize"
-          required
-        >
-        &nbsp;each iteration
+        &nbsp;Partitions initially
       </div>
 
       <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
@@ -81,8 +69,8 @@
           class="form-select-sm" 
           v-model="methodType"
         >
-          <option value="midpoint" selected>Midpoint</option>
-          <option value="leftRight">Left/Right</option>
+          <option value="midpoint">Midpoint</option>
+          <option value="leftRight" selected>Left/Right</option>
         </select>
         &nbsp;and Solution correct up to&nbsp;
         <input 
@@ -175,10 +163,11 @@ export default {
     return {
       numMethod: 'riemannSumMethod',
       equation: '',
-      methodType: 'midpoint',
+      methodType: 'leftRight',
       inputErrorTolerance: false,
-      lowerBound: 1,
-      upperBound: 3,
+      lowerBound: -1,
+      upperBound: 2,
+      numPartitions: 12,
       correctDigits: 4,
       errorTolerance: 0.0001,
       estimates: [],
@@ -202,6 +191,18 @@ export default {
       }
       return str.split("-")[1] || 0;
     },
+    randomizeBounds () {
+      let a = -1;
+      let b = 2;
+
+      let startingRand = a;
+      let endingRand = b;
+      startingRand -= Math.floor(Math.random() * 5);
+      endingRand += Math.floor(Math.random() * 5);
+
+      this.startingBound = startingRand;
+      this.endingBound = endingRand;
+    },
     shortenDecimal (num) {
       return parseFloat(num.toFixed(this.correctDigits));
     },
@@ -220,64 +221,19 @@ export default {
       let xCurr, xPrev = 0;
       let a = this.lowerBound;
       let b = this.upperBound;
-      xCurr = 0;
+      xCurr = calcRiemann(xCurr, lowerBound, upperBound, numPartitions);
 
-      this.estimates.push(`X1 = ${xCurr}`);
-
+      this.estimates.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${a}, ${b}], ${this.computedErrorTolerance})`);
       this.summary.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${a}, ${b}], ${this.computedErrorTolerance})`);
-
       this.solution.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${a}, ${b}], ${this.computedErrorTolerance})`);
 
+      let currNumPartitions = numPartitions;
       let iter = 1;
 
       do {
         xPrev = xCurr;
-
-        this.summary.push(`f(${a}) * f(${xCurr}) ? 0`);
-
-        this.solution.push(`f(${a}) * f(${xCurr}) ? 0`);
-
-        if (func(a) * func(xCurr) < 0) {
-          this.summary.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} < 0`);
-          this.summary.push(`b <- ${xCurr}`);
-
-          this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} < 0`);
-          this.solution.push(`b <- ${xCurr}`);
-          b = xCurr;
-        }
-        else if (func(a) * func(xCurr) > 0) {
-          this.summary.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} > 0`);
-          this.summary.push(`a <- ${xCurr}`);
-
-          this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} > 0`);
-          this.solution.push(`a <- ${xCurr}`);
-          a = xCurr;
-        }
-        else {
-          this.estimates.push(`X${iter} = ${xCurr} is the exact solution`);
-
-          this.summary.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} = 0`);
-          this.summary.push(`X${iter} = ${xCurr} is the exact solution`);
-
-          this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} = 0`);
-
-          this.solution.push(`X${iter} = ${xCurr} is the exact solution`);
-          this.answer = `X${iter} = ${xCurr} is the exact solution`;
-          
-          this.handleEstimates();
-          return;
-        }
-
-        xCurr = shortenDecimal(shortenDecimal(a + b) / 2);
-
-        this.estimates.push(`X${iter} = ${xCurr}`);
-
-        this.summary.push(`X${iter} <- (${a} + ${b}) / 2`);
-        this.summary.push(`X${iter} = ${xCurr}`);
-
-        this.solution.push(`X${iter} <- (${a} + ${b}) / 2`);
-        this.solution.push(`X${iter} <- (${shortenDecimal(a + b)}) / 2`);
-        this.solution.push(`X${iter} = ${xCurr}`);
+        currNumPartitions = Math.floor(currNumPartitions * 2);
+        xCurr = calcRiemann(xCurr, lowerBound, upperBound, currNumPartitions);
         
         iter++;
       } while (Math.abs(xCurr - xPrev) >= this.computedErrorTolerance)
@@ -296,6 +252,7 @@ export default {
       this.inputErrorTolerance = false;
       this.lowerBound = 1;
       this.upperBound = 3;
+      this.numPartitions = 12;
       this.correctDigits = 4;
       this.errorTolerance = 0.0001;
       this.estimates = [];
@@ -325,6 +282,9 @@ export default {
     upperBound () {
       if (this.countDecimals(this.endingBound) > 14) this.endingBound = parseFloat(this.endingBound.toFixed(14));
       this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.startingBound), this.countDecimals(this.endingBound));
+    },
+    numPartitions () {
+      this.numPartitions = Math.floor(this.numPartitions);
     },
     correctDigits () {
       if (this.correctDigits !== '') this.correctDigits = Math.floor(this.correctDigits);
