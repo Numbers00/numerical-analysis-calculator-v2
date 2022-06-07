@@ -83,6 +83,9 @@ export default {
 .dropdown-menu li {
   position: relative;
 }
+.dropdown-menu li:hover {
+  cursor: pointer;
+}
 .dropdown-menu .dropdown-submenu {
   display: none;
   position: absolute;
