@@ -214,10 +214,10 @@ export default {
       const STEPSIZE = shortenDecimal((upperBound - lowerBound) / currNumPartitions);
       let xArr = [];
 
-      this.summary.push(`STEPSIZE${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
-      this.summary.push(`STEPSIZE${iter} = ${STEPSIZE}`);
-      this.solution.push(`STEPSIZE${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
-      this.solution.push(`STEPSIZE${iter} = ${STEPSIZE}`);
+      this.summary.push(`ΔX${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
+      this.summary.push(`ΔX${iter} = ${STEPSIZE}`);
+      this.solution.push(`ΔX${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
+      this.solution.push(`ΔX${iter} = ${STEPSIZE}`);
 
       for (let i = lowerBound; i <= upperBound; i += STEPSIZE) {
         xArr.push(i);
@@ -227,49 +227,36 @@ export default {
       this.solution.push(`X_ARR${iter} = ${xArr}`);
 
       let fxSum = 0;
-
+      let addedArr = [];
       if (this.methodType === 'leftRight') {
         for (let i = 0; i < xArr.length-1; i++) {
-          this.summary.push(`f(${xArr[i]}) ? f(${xArr[i+1]})`);
-          this.solution.push(`f(X_ARR[${i}]) ? f(X_ARR[${i+1}])`);
-          this.solution.push(`f(${xArr[i]}) ? f(${xArr[i+1]})`);
           if (func(xArr[i]) < func(xArr[i+1])) {
             fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i])));
-            this.summary.push(`${func(xArr[i])} < ${func(xArr[i+1])}`);
-            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
-            this.solution.push(`${func(xArr[i])} < ${func(xArr[i+1])}`);
-            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i}]`);
-            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i])}`);
+            addedArr.push(xArr[i]);
           }
           else if (func(xArr[i]) > func(xArr[i+1])) {
             fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i+1])));
-            this.summary.push(`${func(xArr[i])} > ${func(xArr[i+1])}`);
-            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i+1]})`);
-            this.solution.push(`${func(xArr[i])} > ${func(xArr[i+1])}`);
-            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i+1}]`);
-            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i+1])})`);
+            addedArr.push(xArr[i+1]);
           }
           else {
             fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i])));
-            this.summary.push(`${func(xArr[i])} == ${func(xArr[i+1])}`);
-            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
-            this.solution.push(`${func(xArr[i])} == ${func(xArr[i+1])}`);
-            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i}]`);
-            this.solution.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
-            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i])}`);
+            addedArr.push(xArr[i]);
           } 
-          this.summary.push(`FX_SUM = ${fxSum}`);
-          this.solution.push(`FX_SUM = ${fxSum}`);
         }
+        this.summary.push(`X${iter} <- ΔX${iter} * Σf(${addedArr})`);
+        this.solution.push(`X${iter} <- ΔX${iter} * Σf(${addedArr})`);
+        this.solution.push(`X${iter} <- ${STEPSIZE} * Σ[${addedArr.map(e => func(e))}]`);
       } else if (this.methodType === 'midpoint') {
-        for (let i = 0; i < xArr.length-1; i++) {
-          fxSum = shortenDecimal(fxSum + shortenDecimal(func((xArr[i]+xArr[i+1])/2)));
-          this.summary.push(`FX_SUM <- ${fxSum} + f((${xArr[i]}+${xArr[i+1]})/2)`);
-          this.solution.push(`FX_SUM <- ${fxSum} + f((${xArr[i]}+${xArr[i+1]})/2)`);
-          this.solution.push(`FX_SUM <- ${fxSum} + f((${xArr[i]+xArr[i+1]})/2)`);
-          this.solution.push(`FX_SUM <- ${fxSum} + f(${(xArr[i]+xArr[i+1])/2})`);
-          this.solution.push(`FX_SUM <- ${fxSum} + ${func((xArr[i]+xArr[i+1])/2)}`);
+        let midpXArr = xArr.map((e,i) => {
+          return (i+1) <= xArr.length ? (e + xArr[i+1]) / 2 : (e + xArr[i-1]) / 2;
+        }).slice(0,-1);
+        let fMidpXArr = midpXArr.map(e => func(e));
+        for (let i = 0; i < midpXArr.length; i++) {
+          fxSum = shortenDecimal(fxSum + shortenDecimal(fMidpXArr[i]));
         }
+        this.summary.push(`X${iter} <- ΔX${iter} * Σf(${midpXArr})`);
+        this.solution.push(`X${iter} <- ΔX${iter} * Σf(${midpXArr})`);
+        this.solution.push(`X${iter} <- ${STEPSIZE} * Σ[${fMidpXArr}]`);
       }
 
       const ANS = shortenDecimal(STEPSIZE * fxSum);
@@ -307,7 +294,6 @@ export default {
         this.summary.push(`X${iter} = ${xCurr}`);
         this.solution.push(`X${iter} = ${xCurr}`);
         iter++;
-        console.log(xCurr, xPrev, Math.abs(xCurr - xPrev) >= this.computedErrorTolerance, iter <= this.maxiter)
       } while (Math.abs(xCurr - xPrev) >= this.computedErrorTolerance && iter <= this.maxiter)
 
       this.estimates.push(`X${iter-1} = ${xCurr} is our estimate`);

@@ -3,11 +3,11 @@
     <div class="outline-card rounded container-fluid">
       <div class="mt-2 row d-flex justify-content-between">
         <div class="col-lg-6 text-start">
-          <label for="nonlinearMethod" class="form-label mt-2 mb-0 fw-bold">
+          <label for="integrationMethod" class="form-label mt-2 mb-0 fw-bold">
             Pick a Method
           </label>
           <select 
-            id="nonlinearMethod" 
+            id="integrationMethod" 
             class="form-select form-select" 
             aria-label=".form-select-sm example"
             v-model="numMethod"
@@ -27,7 +27,7 @@
               type="text"
               class="form-control col-11" 
               id="equation"
-              placeholder="x^3 - 3x + 1"
+              placeholder="1/(1+x^2)"
               v-model="equation"
               required
             >
@@ -35,49 +35,43 @@
       </div>
 
       <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
-        <div class="form-check">
-          <input 
-            class="form-check-input" 
-            type="checkbox" 
-            v-model="randomBounds"
-            value=""
-            id="checkRandomBounds"
-            required
-          >
-          <label class="form-check-label" for="checkRandomBounds">
-            Random Bounds
-          </label>
-        </div>
-
-        &nbsp;or find a Root between&nbsp;
+        the Bounds set at&nbsp;
         <input 
           type="number" 
-          v-model="startingBound" 
+          v-model="lowerBound" 
           class="bounds-input p-0 form-control" 
-          id="startingBound"
+          id="lowerBound"
           required
         >
         &nbsp;and&nbsp;
         <input 
           type="number" 
-          v-model="endingBound" 
+          v-model="upperBound" 
           class="bounds-input p-0 form-control"
-          id="endingBound"
+          id="upperBound"
           required
         >
+        &nbsp;solving using&nbsp;
+        <input 
+          type="number" 
+          v-model="numPartitions" 
+          class="partitions-input p-0 form-control"
+          id="numPartitions"
+          required
+        >
+        &nbsp;Partitions initially
       </div>
 
       <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
-        w/ Max Iteration&nbsp;
-        <input 
-          type="number" 
-          v-model="maxiter"
-          min="1" 
-          max="500" 
-          class="places-input p-0 form-control" 
-          id="maxIteration"
-          required
+        w/ Method Type as&nbsp;
+        <select 
+          id="methodType" 
+          class="form-select-sm" 
+          v-model="methodType"
         >
+          <option value="midpoint">Midpoint</option>
+          <option value="leftRight" selected>Left/Right</option>
+        </select>
         &nbsp;and Solution correct up to&nbsp;
         <input 
           type="number" 
@@ -128,7 +122,7 @@
     <p class="text-start mt-4">
       Bisection Method: BM(f(x), [a,b], E)<br>
       <br>
-      For: Nonlinear Equations<br>
+      For: integration Equations<br>
       Brief Description: Will always converge so long as a root is within the 
       given bounds<br>
       Comparison with Other Methods: Slower than Regula-Falsi Method but simpler<br>
@@ -161,19 +155,20 @@
 <script>
 
 export default {
-  name: 'TrapezoidalRuleMethod',
+  name: 'RiemannSumMethod',
   props: {
 
   },
   data () {
     return {
-      numMethod: 'trapezoidalRuleMethod',
+      numMethod: 'riemannSumMethod',
       equation: '',
+      methodType: 'leftRight',
       inputErrorTolerance: false,
-      randomBounds: false,
-      startingBound: 1,
-      endingBound: 3,
+      lowerBound: -1,
+      upperBound: 2,
       maxiter: 100,
+      numPartitions: 12,
       correctDigits: 4,
       errorTolerance: 0.0001,
       estimates: [],
@@ -198,54 +193,90 @@ export default {
       return str.split("-")[1] || 0;
     },
     randomizeBounds () {
-      const func = this.func;
-      let a = 1;
-      let b = 3;
-      const randMaxiter = 100;
-
-      for (let i = 0; func(a) * func(b) >= 0 && i < randMaxiter; i++) {
-        a--;
-        b++;
-      }
-
-      if (func(a) * func(b) >= 0) {
-        a = 1;
-        b = 5;
-        for (let i = 0; func(a) * func(b) >= 0 && i < randMaxiter; i++) {
-          a++;
-          b++;
-        }
-      }
-
-      if (func(a) * func(b) >= 0) {
-        a = -1;
-        b = -5;
-        for (let i = 0; func(a) * func(b) >= 0 && i < randMaxiter; i++) {
-          a--;
-          b--;
-        }
-      }
-
-      // console.log(func(a), func(b));
-      // func(x) === func(0) at very large numbers: resolved
-      // if (func(a) * func(b) >= 0 || (a !== 0 && func(a) === func(0) && func(0) !== 0) || (b !== 0 && func(b) === func(0) && func(b) !== 0)) throw new Error();
-      if (func(a) * func(b) >= 0) throw new Error();
+      let a = -1;
+      let b = 2;
 
       let startingRand = a;
       let endingRand = b;
       startingRand -= Math.floor(Math.random() * 5);
       endingRand += Math.floor(Math.random() * 5);
 
-      if (func(startingRand) * func(endingRand) >= 0) {
-        this.startingBound = a;
-        this.endingBound = b;
-      } else {
-        this.startingBound = startingRand;
-        this.endingBound = endingRand;
-      }
+      this.startingBound = startingRand;
+      this.endingBound = endingRand;
     },
     shortenDecimal (num) {
       return Math.round((num + Number.EPSILON) * (10 ** this.correctDigits)) / (10 ** this.correctDigits);
+    },
+    calcRiemannSum (lowerBound, upperBound, currNumPartitions, iter) {
+      let func = this.func;
+      let shortenDecimal = this.shortenDecimal;
+
+      const STEPSIZE = shortenDecimal((upperBound - lowerBound) / currNumPartitions);
+      let xArr = [];
+
+      this.summary.push(`STEPSIZE${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
+      this.summary.push(`STEPSIZE${iter} = ${STEPSIZE}`);
+      this.solution.push(`STEPSIZE${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
+      this.solution.push(`STEPSIZE${iter} = ${STEPSIZE}`);
+
+      for (let i = lowerBound; i <= upperBound; i += STEPSIZE) {
+        xArr.push(i);
+      }
+
+      this.summary.push(`X_ARR${iter} = ${xArr}`);
+      this.solution.push(`X_ARR${iter} = ${xArr}`);
+
+      let fxSum = 0;
+
+      if (this.methodType === 'leftRight') {
+        for (let i = 0; i < xArr.length-1; i++) {
+          this.summary.push(`f(${xArr[i]}) ? f(${xArr[i+1]})`);
+          this.solution.push(`f(X_ARR[${i}]) ? f(X_ARR[${i+1}])`);
+          this.solution.push(`f(${xArr[i]}) ? f(${xArr[i+1]})`);
+          if (func(xArr[i]) < func(xArr[i+1])) {
+            fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i])));
+            this.summary.push(`${func(xArr[i])} < ${func(xArr[i+1])}`);
+            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
+            this.solution.push(`${func(xArr[i])} < ${func(xArr[i+1])}`);
+            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i}]`);
+            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i])}`);
+          }
+          else if (func(xArr[i]) > func(xArr[i+1])) {
+            fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i+1])));
+            this.summary.push(`${func(xArr[i])} > ${func(xArr[i+1])}`);
+            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i+1]})`);
+            this.solution.push(`${func(xArr[i])} > ${func(xArr[i+1])}`);
+            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i+1}]`);
+            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i+1])})`);
+          }
+          else {
+            fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i])));
+            this.summary.push(`${func(xArr[i])} == ${func(xArr[i+1])}`);
+            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
+            this.solution.push(`${func(xArr[i])} == ${func(xArr[i+1])}`);
+            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i}]`);
+            this.solution.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
+            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i])}`);
+          } 
+          this.summary.push(`FX_SUM = ${fxSum}`);
+          this.solution.push(`FX_SUM = ${fxSum}`);
+        }
+      } else if (this.methodType === 'midpoint') {
+        for (let i = 0; i < xArr.length-1; i++) {
+          fxSum = shortenDecimal(fxSum + shortenDecimal(func((xArr[i]+xArr[i+1])/2)));
+          this.summary.push(`FX_SUM <- ${fxSum} + f((${xArr[i]}+${xArr[i+1]})/2)`);
+          this.solution.push(`FX_SUM <- ${fxSum} + f((${xArr[i]}+${xArr[i+1]})/2)`);
+          this.solution.push(`FX_SUM <- ${fxSum} + f((${xArr[i]+xArr[i+1]})/2)`);
+          this.solution.push(`FX_SUM <- ${fxSum} + f(${(xArr[i]+xArr[i+1])/2})`);
+          this.solution.push(`FX_SUM <- ${fxSum} + ${func((xArr[i]+xArr[i+1])/2)}`);
+        }
+      }
+
+      const ANS = shortenDecimal(STEPSIZE * fxSum);
+      this.summary.push(`X${iter} <- ${STEPSIZE} * ${fxSum}`);
+      this.solution.push(`X${iter} <- ${STEPSIZE} * ${fxSum}`);
+
+      return shortenDecimal(ANS);
     },
     handleCalculate () {
       this.prevCorrectDigits = this.correctDigits;
@@ -255,131 +286,43 @@ export default {
       this.solution = [];
       this.answer = '';
 
-      const shortenDecimal = this.shortenDecimal;
+      let xPrev = 0;
+      let xCurr = Infinity;
+      let lowerBound = this.lowerBound;
+      let upperBound = this.upperBound;
+      let numPartitions = this.numPartitions;
 
-      const func = this.func;
+      this.estimates.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
+      this.summary.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
+      this.solution.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
 
-      if (this.randomBounds) {
-        try {
-          this.randomizeBounds();
-        } catch (e) {
-          this.estimates.push('Could not find eligible bounds for this equation, but you can try manually inputting random bounds');
-          this.summary.push('Could not find eligible bounds for this equation, but you can try manually inputting random bounds');
-          this.solution.push('Could not find eligible bounds for this equation, but you can try manually inputting random bounds');
-          this.answer = 'Could not find eligible bounds for this equation, but you can try manually inputting random bounds';
-          this.handleEstimates();
-          return;
-        }
-      } else {
-        if (func(this.startingBound) * func(this.endingBound) >= 0) {
-          this.estimates.push(`f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`);
-          this.summary.push(`f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`);
-          this.solution.push(`f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`);
-
-          this.answer = `f(${this.startingBound}) * f(${this.endingBound}) = ${func(this.startingBound) * func(this.endingBound)} which is greater than or equal to 0, try with different bounds`
-
-          this.handleEstimates();
-          return;
-        }
-      }
-      let xCurr, xPrev = 0;
-      let a = this.startingBound;
-      let b = this.endingBound;
-      xCurr = shortenDecimal(shortenDecimal(a + b) / 2);
-
-      this.estimates.push(`X1 = ${xCurr}`);
-
-      this.summary.push(`BM(f(x), [a, b], Ɛ) -> BM(${this.toPrintEq}, [${a}, ${b}], ${this.computedErrorTolerance})`);
-      this.summary.push(`X1 <- (${a} + ${b}) / 2`);
-      this.summary.push(`X1 = ${xCurr}`);
-
-      this.solution.push(`BM(f(x), [a, b], Ɛ) -> BM(${this.toPrintEq}, [${a}, ${b}], ${this.computedErrorTolerance})`);
-      this.solution.push(`X1 <- (${a} + ${b}) / 2`);
-      this.solution.push(`X1 <- (${shortenDecimal(a + b)}) / 2`);
-      this.solution.push(`X1 = ${xCurr}`);
-
-      let iter = 2;
+      let currNumPartitions = Math.round(((numPartitions / 2) + Number.EPSILON) * (10 ** 1)) / (10 ** 1);;
+      let iter = 1;
 
       do {
         xPrev = xCurr;
-
-        this.summary.push(`f(${a}) * f(${xCurr}) ? 0`);
-
-        this.solution.push(`f(${a}) * f(${xCurr}) ? 0`);
-
-        if (func(a) * func(xCurr) < 0) {
-          this.summary.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} < 0`);
-          this.summary.push(`b <- ${xCurr}`);
-
-          this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} < 0`);
-          this.solution.push(`b <- ${xCurr}`);
-          b = xCurr;
-        }
-        else if (func(a) * func(xCurr) > 0) {
-          this.summary.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} > 0`);
-          this.summary.push(`a <- ${xCurr}`);
-
-          this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} > 0`);
-          this.solution.push(`a <- ${xCurr}`);
-          a = xCurr;
-        }
-        else {
-          this.estimates.push(`X${iter} = ${xCurr} is the exact solution`);
-
-          this.summary.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} = 0`);
-          this.summary.push(`X${iter} = ${xCurr} is the exact solution`);
-
-          this.solution.push(`${shortenDecimal(func(a))} * ${shortenDecimal(func(xCurr))} = 0`);
-
-          this.solution.push(`X${iter} = ${xCurr} is the exact solution`);
-          this.answer = `X${iter} = ${xCurr} is the exact solution`;
-          
-          this.handleEstimates();
-          return;
-        }
-
-        xCurr = shortenDecimal(shortenDecimal(a + b) / 2);
-
+        currNumPartitions = Math.round(currNumPartitions * 2);
+        xCurr = this.calcRiemannSum(lowerBound, upperBound, currNumPartitions, iter);
         this.estimates.push(`X${iter} = ${xCurr}`);
-
-        this.summary.push(`X${iter} <- (${a} + ${b}) / 2`);
         this.summary.push(`X${iter} = ${xCurr}`);
-
-        this.solution.push(`X${iter} <- (${a} + ${b}) / 2`);
-        this.solution.push(`X${iter} <- (${shortenDecimal(a + b)}) / 2`);
         this.solution.push(`X${iter} = ${xCurr}`);
-        
         iter++;
+        console.log(xCurr, xPrev, Math.abs(xCurr - xPrev) >= this.computedErrorTolerance, iter <= this.maxiter)
       } while (Math.abs(xCurr - xPrev) >= this.computedErrorTolerance && iter <= this.maxiter)
 
-      if (iter > this.maxiter) {
-        this.estimates.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
-
-        this.summary.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
-
-        this.solution.push(`the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`);
-        this.answer = `the calculation has reached maxiter ${maxiter} while not being correct up to ${correctDigits} digits, ${xCurr} is the final estimate we've reached`;
-        
-        this.handleEstimates();
-        return;
-      }
-
       this.estimates.push(`X${iter-1} = ${xCurr} is our estimate`);
-
       this.summary.push(`X${iter-1} = ${xCurr} is our estimate`);
-
       this.solution.push(`X${iter-1} = ${xCurr} is our estimate`);
       this.answer = `X${iter-1} = ${xCurr} is our estimate`;
-
       this.handleEstimates();
     },
     handleReset () {
       this.equation = '';
       this.inputErrorTolerance = false;
-      this.randomBounds = false;
-      this.startingBound = 1;
-      this.endingBound = 3;
+      this.lowerBound = 1;
+      this.upperBound = 3;
       this.maxiter = 100;
+      this.numPartitions = 12;
       this.correctDigits = 4;
       this.errorTolerance = 0.0001;
       this.estimates = [];
@@ -402,23 +345,16 @@ export default {
       document.getElementById('correctDigits').disabled = this.inputErrorTolerance;
       document.getElementById('errorTolerance').disabled = !this.inputErrorTolerance;
     },
-    startingBound () {
+    lowerBound () {
       if (this.countDecimals(this.startingBound) > 14) this.startingBound = parseFloat(this.startingBound.toFixed(14));
       this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.startingBound), this.countDecimals(this.endingBound));
     },
-    endingBound () {
+    upperBound () {
       if (this.countDecimals(this.endingBound) > 14) this.endingBound = parseFloat(this.endingBound.toFixed(14));
       this.correctDigits = Math.max(this.prevCorrectDigits, this.countDecimals(this.startingBound), this.countDecimals(this.endingBound));
     },
-    randomBounds () {
-      document.getElementById('startingBound').disabled = this.randomBounds;
-      document.getElementById('endingBound').disabled = this.randomBounds;
-    },
-    maxiter () {
-      if (this.maxiter !== '') this.maxiter = Math.floor(this.maxiter);
-
-      if (this.maxiter !== '' && this.maxiter < 1) this.maxiter = 1;
-      else if (this.maxiter > 500) this.maxiter = 500; 
+    numPartitions () {
+      this.numPartitions = Math.floor(this.numPartitions);
     },
     correctDigits () {
       if (this.correctDigits !== '') this.correctDigits = Math.floor(this.correctDigits);
@@ -485,5 +421,13 @@ input[type=number] {
   &.longer-places-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
   }
+}
+
+#methodType {
+  min-width: 88px;
+  max-width: 88px;
+  min-height: 30px;
+  max-height: 30px;
+  text-align: center;
 }
 </style>
