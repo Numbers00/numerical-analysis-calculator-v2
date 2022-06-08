@@ -247,7 +247,7 @@ export default {
       }
     },
     shortenDecimal (num) {
-      return parseFloat(num.toFixed(this.correctDigits));
+      return Math.round((num + Number.EPSILON) * (10 ** this.correctDigits)) / (10 ** this.correctDigits);
     },
     handleCalculate () {
       this.prevCorrectDigits = this.correctDigits;

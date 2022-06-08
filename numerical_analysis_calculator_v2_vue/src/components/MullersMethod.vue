@@ -132,7 +132,7 @@
       </div>
     </div>
     <p class="text-start mt-4">
-      Secant Method: SM(f(x), X0, X1, Ɛ, 𝛿, maxiter)<br>
+      Muller's Method: MM(f(x), [X0, X1, X2], Ɛ, 𝛿, maxiter)<br>
       <br>
       For: Nonlinear Equations<br>
       Brief Description: Is one of the fastest iterative algorithms, but
@@ -284,7 +284,7 @@ export default {
       }
     },
     shortenDecimal (num) {
-      return parseFloat(num.toFixed(this.correctDigits));
+      return Math.round((num + Number.EPSILON) * (10 ** this.correctDigits)) / (10 ** this.correctDigits);
     },
     handleCalculate () {
       this.prevCorrectDigits = this.correctDigits;

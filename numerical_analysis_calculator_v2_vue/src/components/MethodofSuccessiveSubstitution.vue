@@ -193,7 +193,7 @@ export default {
       this.initialGuess += Math.floor(Math.random() * 5) * ((-1) ** (Math.floor(Math.random() * 2) + 1));
     },
     shortenDecimal (num) {
-      return parseFloat(num.toFixed(this.correctDigits));
+      return Math.round((num + Number.EPSILON) * (10 ** this.correctDigits)) / (10 ** this.correctDigits);
     },
     handleCalculate () {
       this.prevCorrectDigits = this.correctDigits;

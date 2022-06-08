@@ -27,7 +27,7 @@
               type="text"
               class="form-control col-11" 
               id="equation"
-              placeholder="x^3 - 3x + 1"
+              placeholder="1/(1+x^2)"
               v-model="equation"
               required
             >
@@ -167,6 +167,7 @@ export default {
       inputErrorTolerance: false,
       lowerBound: -1,
       upperBound: 2,
+      maxiter: 100,
       numPartitions: 12,
       correctDigits: 4,
       errorTolerance: 0.0001,
@@ -204,7 +205,78 @@ export default {
       this.endingBound = endingRand;
     },
     shortenDecimal (num) {
-      return parseFloat(num.toFixed(this.correctDigits));
+      return Math.round((num + Number.EPSILON) * (10 ** this.correctDigits)) / (10 ** this.correctDigits);
+    },
+    calcRiemannSum (lowerBound, upperBound, currNumPartitions, iter) {
+      let func = this.func;
+      let shortenDecimal = this.shortenDecimal;
+
+      const STEPSIZE = shortenDecimal((upperBound - lowerBound) / currNumPartitions);
+      let xArr = [];
+
+      this.summary.push(`STEPSIZE${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
+      this.summary.push(`STEPSIZE${iter} = ${STEPSIZE}`);
+      this.solution.push(`STEPSIZE${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
+      this.solution.push(`STEPSIZE${iter} = ${STEPSIZE}`);
+
+      for (let i = lowerBound; i <= upperBound; i += STEPSIZE) {
+        xArr.push(i);
+      }
+
+      this.summary.push(`X_ARR${iter} = ${xArr}`);
+      this.solution.push(`X_ARR${iter} = ${xArr}`);
+
+      let fxSum = 0;
+
+      if (this.methodType === 'leftRight') {
+        for (let i = 0; i < xArr.length-1; i++) {
+          this.summary.push(`f(${xArr[i]}) ? f(${xArr[i+1]})`);
+          this.solution.push(`f(X_ARR[${i}]) ? f(X_ARR[${i+1}])`);
+          this.solution.push(`f(${xArr[i]}) ? f(${xArr[i+1]})`);
+          if (func(xArr[i]) < func(xArr[i+1])) {
+            fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i])));
+            this.summary.push(`${func(xArr[i])} < ${func(xArr[i+1])}`);
+            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
+            this.solution.push(`${func(xArr[i])} < ${func(xArr[i+1])}`);
+            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i}]`);
+            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i])}`);
+          }
+          else if (func(xArr[i]) > func(xArr[i+1])) {
+            fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i+1])));
+            this.summary.push(`${func(xArr[i])} > ${func(xArr[i+1])}`);
+            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i+1]})`);
+            this.solution.push(`${func(xArr[i])} > ${func(xArr[i+1])}`);
+            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i+1}]`);
+            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i+1])})`);
+          }
+          else {
+            fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i])));
+            this.summary.push(`${func(xArr[i])} == ${func(xArr[i+1])}`);
+            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
+            this.solution.push(`${func(xArr[i])} == ${func(xArr[i+1])}`);
+            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i}]`);
+            this.solution.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
+            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i])}`);
+          } 
+          this.summary.push(`FX_SUM = ${fxSum}`);
+          this.solution.push(`FX_SUM = ${fxSum}`);
+        }
+      } else if (this.methodType === 'midpoint') {
+        for (let i = 0; i < xArr.length-1; i++) {
+          fxSum = shortenDecimal(fxSum + shortenDecimal(func((xArr[i]+xArr[i+1])/2)));
+          this.summary.push(`FX_SUM <- ${fxSum} + f((${xArr[i]}+${xArr[i+1]})/2)`);
+          this.solution.push(`FX_SUM <- ${fxSum} + f((${xArr[i]}+${xArr[i+1]})/2)`);
+          this.solution.push(`FX_SUM <- ${fxSum} + f((${xArr[i]+xArr[i+1]})/2)`);
+          this.solution.push(`FX_SUM <- ${fxSum} + f(${(xArr[i]+xArr[i+1])/2})`);
+          this.solution.push(`FX_SUM <- ${fxSum} + ${func((xArr[i]+xArr[i+1])/2)}`);
+        }
+      }
+
+      const ANS = shortenDecimal(STEPSIZE * fxSum);
+      this.summary.push(`X${iter} <- ${STEPSIZE} * ${fxSum}`);
+      this.solution.push(`X${iter} <- ${STEPSIZE} * ${fxSum}`);
+
+      return shortenDecimal(ANS);
     },
     handleCalculate () {
       this.prevCorrectDigits = this.correctDigits;
@@ -214,37 +286,34 @@ export default {
       this.solution = [];
       this.answer = '';
 
-      const shortenDecimal = this.shortenDecimal;
+      let xPrev = 0;
+      let xCurr = Infinity;
+      let lowerBound = this.lowerBound;
+      let upperBound = this.upperBound;
+      let numPartitions = this.numPartitions;
 
-      const func = this.func;
+      this.estimates.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
+      this.summary.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
+      this.solution.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
 
-      let xCurr, xPrev = 0;
-      let a = this.lowerBound;
-      let b = this.upperBound;
-      xCurr = calcRiemann(xCurr, lowerBound, upperBound, numPartitions);
-
-      this.estimates.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${a}, ${b}], ${this.computedErrorTolerance})`);
-      this.summary.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${a}, ${b}], ${this.computedErrorTolerance})`);
-      this.solution.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${a}, ${b}], ${this.computedErrorTolerance})`);
-
-      let currNumPartitions = numPartitions;
+      let currNumPartitions = Math.round(((numPartitions / 2) + Number.EPSILON) * (10 ** 1)) / (10 ** 1);;
       let iter = 1;
 
       do {
         xPrev = xCurr;
-        currNumPartitions = Math.floor(currNumPartitions * 2);
-        xCurr = calcRiemann(xCurr, lowerBound, upperBound, currNumPartitions);
-        
+        currNumPartitions = Math.round(currNumPartitions * 2);
+        xCurr = this.calcRiemannSum(lowerBound, upperBound, currNumPartitions, iter);
+        this.estimates.push(`X${iter} = ${xCurr}`);
+        this.summary.push(`X${iter} = ${xCurr}`);
+        this.solution.push(`X${iter} = ${xCurr}`);
         iter++;
-      } while (Math.abs(xCurr - xPrev) >= this.computedErrorTolerance)
+        console.log(xCurr, xPrev, Math.abs(xCurr - xPrev) >= this.computedErrorTolerance, iter <= this.maxiter)
+      } while (Math.abs(xCurr - xPrev) >= this.computedErrorTolerance && iter <= this.maxiter)
 
       this.estimates.push(`X${iter-1} = ${xCurr} is our estimate`);
-
       this.summary.push(`X${iter-1} = ${xCurr} is our estimate`);
-
       this.solution.push(`X${iter-1} = ${xCurr} is our estimate`);
       this.answer = `X${iter-1} = ${xCurr} is our estimate`;
-
       this.handleEstimates();
     },
     handleReset () {
@@ -252,6 +321,7 @@ export default {
       this.inputErrorTolerance = false;
       this.lowerBound = 1;
       this.upperBound = 3;
+      this.maxiter = 100;
       this.numPartitions = 12;
       this.correctDigits = 4;
       this.errorTolerance = 0.0001;

@@ -229,7 +229,7 @@ export default {
       if (derivFunc(this.initialGuess) === 0 || this.initialGuess < -15 || this.initialGuess > 15) throw new Error();
     },
     shortenDecimal (num) {
-      return parseFloat(num.toFixed(this.correctDigits));
+      return Math.round((num + Number.EPSILON) * (10 ** this.correctDigits)) / (10 ** this.correctDigits);
     },
     async handleCalculate () {
       this.prevCorrectDigits = this.correctDigits;
