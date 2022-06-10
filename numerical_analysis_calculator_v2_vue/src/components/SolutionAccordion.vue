@@ -33,14 +33,26 @@
     <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#helperAccordion">
       <div class="accordion-body text-start">
         <template v-for="(line, index) in printSummary">
-          <p 
-            v-if="line.includes('=')" 
-            :key="index.uuid" 
-            class="lead fw-bold"
-          >
-          {{line}}
-          </p>
-          <p v-else :key="index.uuid">{{line}}</p>
+          <template v-if="line.length > 56">
+            <p 
+              v-if="/X[0-9]+ =/.test(line)" 
+              :key="index.uuid" 
+              class="lead fw-bold"
+            >
+            {{line.slice(0,56)}}...
+            </p>
+            <p v-else :key="index.uuid">{{line.slice(0,56)}}...</p>
+          </template>
+          <template v-else>
+            <p 
+              v-if="/^X[0-9]+ =/.test(line)" 
+              :key="index.uuid" 
+              class="lead fw-bold"
+            >
+            {{line}}
+            </p>
+            <p v-else :key="index.uuid">{{line}}</p>
+          </template>
         </template>
       </div>
     </div>
@@ -54,14 +66,26 @@
     <div id="collapseFour" class="accordion-collapse collapse show" aria-labelledby="headingFour" data-bs-parent="#helperAccordion">
       <div class="accordion-body text-start">
         <template v-for="(line, index) in printSolution">
-          <p 
-            v-if="line.includes('=')" 
-            :key="index.uuid" 
-            class="lead fw-bold"
-          >
-          {{line}}
-          </p>
-          <p v-else :key="index.uuid">{{line}}</p>
+          <template v-if="line.length > 56">
+            <p 
+              v-if="/X[0-9]+ =/.test(line)" 
+              :key="index.uuid" 
+              class="lead fw-bold"
+            >
+            {{line.slice(0,56)}}...
+            </p>
+            <p v-else :key="index.uuid">{{line.slice(0,56)}}...</p>
+          </template>
+          <template v-else>
+            <p 
+              v-if="/^X[0-9]+ =/.test(line)" 
+              :key="index.uuid" 
+              class="lead fw-bold"
+            >
+            {{line}}
+            </p>
+            <p v-else :key="index.uuid">{{line}}</p>
+          </template>
         </template>
       </div>
     </div>

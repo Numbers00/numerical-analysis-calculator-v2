@@ -259,11 +259,10 @@ export default {
         this.solution.push(`X${iter} <- ${STEPSIZE} * Σ[${fMidpXArr}]`);
       }
 
-      const ANS = shortenDecimal(STEPSIZE * fxSum);
       this.summary.push(`X${iter} <- ${STEPSIZE} * ${fxSum}`);
       this.solution.push(`X${iter} <- ${STEPSIZE} * ${fxSum}`);
 
-      return shortenDecimal(ANS);
+      return shortenDecimal(STEPSIZE * fxSum);
     },
     handleCalculate () {
       this.prevCorrectDigits = this.correctDigits;
