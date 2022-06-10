@@ -64,7 +64,7 @@
       </button>
     </h2>
     <div id="collapseFour" class="accordion-collapse collapse show" aria-labelledby="headingFour" data-bs-parent="#helperAccordion">
-      <div class="accordion-body text-start">
+      <div class="accordion-body text-start" style="overflow-x: auto;">
         <template v-for="(line, index) in printSolution">
           <template v-if="line.length > 56">
             <p 

@@ -51,7 +51,7 @@
           id="upperBound"
           required
         >
-        &nbsp;solving using&nbsp;
+        &nbsp;w/&nbsp;
         <input 
           type="number" 
           v-model="numPartitions" 
@@ -59,20 +59,11 @@
           id="numPartitions"
           required
         >
-        &nbsp;Partitions initially
+        &nbsp;initial Partitions
       </div>
 
       <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
-        w/ Method Type as&nbsp;
-        <select 
-          id="methodType" 
-          class="form-select-sm" 
-          v-model="methodType"
-        >
-          <option value="midpoint">Midpoint</option>
-          <option value="leftRight" selected>Left/Right</option>
-        </select>
-        &nbsp;and Solution correct up to&nbsp;
+        with Solution correct up to&nbsp;
         <input 
           type="number" 
           v-model="correctDigits" 
@@ -155,15 +146,14 @@
 <script>
 
 export default {
-  name: 'RiemannSumMethod',
+  name: 'TrapezoidalRuleMethod',
   props: {
 
   },
   data () {
     return {
-      numMethod: 'riemannSumMethod',
+      numMethod: 'trapezoidalRuleMethod',
       equation: '',
-      methodType: 'leftRight',
       inputErrorTolerance: false,
       lowerBound: -1,
       upperBound: 2,
@@ -207,76 +197,38 @@ export default {
     shortenDecimal (num) {
       return Math.round((num + Number.EPSILON) * (10 ** this.correctDigits)) / (10 ** this.correctDigits);
     },
-    calcRiemannSum (lowerBound, upperBound, currNumPartitions, iter) {
+    calcTrapezoidalRule (lowerBound, upperBound, currNumPartitions, iter) {
       let func = this.func;
       let shortenDecimal = this.shortenDecimal;
 
       const STEPSIZE = shortenDecimal((upperBound - lowerBound) / currNumPartitions);
       let xArr = [];
 
-      this.summary.push(`STEPSIZE${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
-      this.summary.push(`STEPSIZE${iter} = ${STEPSIZE}`);
-      this.solution.push(`STEPSIZE${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
-      this.solution.push(`STEPSIZE${iter} = ${STEPSIZE}`);
+      this.summary.push(`ΔX${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
+      this.summary.push(`ΔX${iter} = ${STEPSIZE}`);
+      this.solution.push(`ΔX${iter} <- (${upperBound} - ${lowerBound})/${currNumPartitions}`);
+      this.solution.push(`ΔX${iter} = ${STEPSIZE}`);
 
       for (let i = lowerBound; i <= upperBound; i += STEPSIZE) {
         xArr.push(i);
       }
 
-      this.summary.push(`X_ARR${iter} = ${xArr}`);
-      this.solution.push(`X_ARR${iter} = ${xArr}`);
+      this.summary.push(`X_ARR${iter} = [${xArr}]`);
+      this.solution.push(`X_ARR${iter} = [${xArr}]`);
 
       let fxSum = 0;
-
-      if (this.methodType === 'leftRight') {
-        for (let i = 0; i < xArr.length-1; i++) {
-          this.summary.push(`f(${xArr[i]}) ? f(${xArr[i+1]})`);
-          this.solution.push(`f(X_ARR[${i}]) ? f(X_ARR[${i+1}])`);
-          this.solution.push(`f(${xArr[i]}) ? f(${xArr[i+1]})`);
-          if (func(xArr[i]) < func(xArr[i+1])) {
-            fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i])));
-            this.summary.push(`${func(xArr[i])} < ${func(xArr[i+1])}`);
-            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
-            this.solution.push(`${func(xArr[i])} < ${func(xArr[i+1])}`);
-            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i}]`);
-            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i])}`);
-          }
-          else if (func(xArr[i]) > func(xArr[i+1])) {
-            fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i+1])));
-            this.summary.push(`${func(xArr[i])} > ${func(xArr[i+1])}`);
-            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i+1]})`);
-            this.solution.push(`${func(xArr[i])} > ${func(xArr[i+1])}`);
-            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i+1}]`);
-            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i+1])})`);
-          }
-          else {
-            fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i])));
-            this.summary.push(`${func(xArr[i])} == ${func(xArr[i+1])}`);
-            this.summary.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
-            this.solution.push(`${func(xArr[i])} == ${func(xArr[i+1])}`);
-            this.solution.push(`FX_SUM <- FX_SUM + X_ARR[${i}]`);
-            this.solution.push(`FX_SUM <- ${fxSum} + f(${xArr[i]})`);
-            this.solution.push(`FX_SUM <- ${fxSum} + ${func(xArr[i])}`);
-          } 
-          this.summary.push(`FX_SUM = ${fxSum}`);
-          this.solution.push(`FX_SUM = ${fxSum}`);
-        }
-      } else if (this.methodType === 'midpoint') {
-        for (let i = 0; i < xArr.length-1; i++) {
-          fxSum = shortenDecimal(fxSum + shortenDecimal(func((xArr[i]+xArr[i+1])/2)));
-          this.summary.push(`FX_SUM <- ${fxSum} + f((${xArr[i]}+${xArr[i+1]})/2)`);
-          this.solution.push(`FX_SUM <- ${fxSum} + f((${xArr[i]}+${xArr[i+1]})/2)`);
-          this.solution.push(`FX_SUM <- ${fxSum} + f((${xArr[i]+xArr[i+1]})/2)`);
-          this.solution.push(`FX_SUM <- ${fxSum} + f(${(xArr[i]+xArr[i+1])/2})`);
-          this.solution.push(`FX_SUM <- ${fxSum} + ${func((xArr[i]+xArr[i+1])/2)}`);
-        }
+      for (let i = 1; i < xArr.length-1; i++) {
+        fxSum = shortenDecimal(fxSum + shortenDecimal(func(xArr[i])));
       }
 
-      const ANS = shortenDecimal(STEPSIZE * fxSum);
-      this.summary.push(`X${iter} <- ${STEPSIZE} * ${fxSum}`);
-      this.solution.push(`X${iter} <- ${STEPSIZE} * ${fxSum}`);
 
-      return shortenDecimal(ANS);
+      this.summary.push(`X${iter} <- ΔX${iter}[((f(${xArr[0]}) + f(${xArr[xArr.length-1]})) / 2) + Σf(${xArr.slice(1,xArr.length-2)})]`);
+      this.solution.push(`X${iter} <- ΔX${iter}[((f(${xArr[0]}) + f(${xArr[xArr.length-1]})) / 2) + Σf(${xArr.slice(1,xArr.length-2)})]`);
+      this.solution.push(`X${iter} <- ${STEPSIZE}[((${func(xArr[0])} + ${func(xArr[xArr.length-1])}) / 2) * Σ[${xArr.slice(1,xArr.length-2).map(e => func(e))}]]`);
+      this.solution.push(`X${iter} <- ${STEPSIZE}[${(func(xArr[0]) + func(xArr[xArr.length-1])) / 2} * ${fxSum}]`);
+      this.solution.push(`X${iter} <- ${STEPSIZE} * ${((func(xArr[0]) + func(xArr[xArr.length-1])) / 2) * fxSum}`);
+
+      return shortenDecimal(STEPSIZE * shortenDecimal(shortenDecimal(shortenDecimal(shortenDecimal(func(xArr[0])) + shortenDecimal(func(xArr[xArr.length-1]))) / 2) + fxSum));
     },
     handleCalculate () {
       this.prevCorrectDigits = this.correctDigits;
@@ -292,9 +244,9 @@ export default {
       let upperBound = this.upperBound;
       let numPartitions = this.numPartitions;
 
-      this.estimates.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
-      this.summary.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
-      this.solution.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
+      this.estimates.push(`TR(f(x), [a, b], n, Ɛ) -> TR(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${numPartitions}, ${this.computedErrorTolerance})`);
+      this.summary.push(`TR(f(x), [a, b], n, Ɛ) -> TR(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${numPartitions}, ${this.computedErrorTolerance})`);
+      this.solution.push(`TR(f(x), [a, b], n, Ɛ) -> TR(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${numPartitions}, ${this.computedErrorTolerance})`);
 
       let currNumPartitions = Math.round(((numPartitions / 2) + Number.EPSILON) * (10 ** 1)) / (10 ** 1);;
       let iter = 1;
@@ -302,12 +254,11 @@ export default {
       do {
         xPrev = xCurr;
         currNumPartitions = Math.round(currNumPartitions * 2);
-        xCurr = this.calcRiemannSum(lowerBound, upperBound, currNumPartitions, iter);
+        xCurr = this.calcTrapezoidalRule(lowerBound, upperBound, currNumPartitions, iter);
         this.estimates.push(`X${iter} = ${xCurr}`);
         this.summary.push(`X${iter} = ${xCurr}`);
         this.solution.push(`X${iter} = ${xCurr}`);
         iter++;
-        console.log(xCurr, xPrev, Math.abs(xCurr - xPrev) >= this.computedErrorTolerance, iter <= this.maxiter)
       } while (Math.abs(xCurr - xPrev) >= this.computedErrorTolerance && iter <= this.maxiter)
 
       this.estimates.push(`X${iter-1} = ${xCurr} is our estimate`);
@@ -421,13 +372,5 @@ input[type=number] {
   &.longer-places-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
   }
-}
-
-#methodType {
-  min-width: 88px;
-  max-width: 88px;
-  min-height: 30px;
-  max-height: 30px;
-  text-align: center;
 }
 </style>

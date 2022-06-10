@@ -51,7 +51,7 @@
           id="upperBound"
           required
         >
-        &nbsp;solving using&nbsp;
+        &nbsp;w/&nbsp;
         <input 
           type="number" 
           v-model="numPartitions" 
@@ -59,7 +59,7 @@
           id="numPartitions"
           required
         >
-        &nbsp;Partitions initially
+        &nbsp;initial Partitions
       </div>
 
       <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
@@ -82,10 +82,10 @@
           id="correctDigits"
           required
         >
-        &nbsp;Decimal Places
       </div>
 
       <div class="mt-4 ms-0 ps-0 container-fluid d-inline-flex">
+        &nbsp;Decimal Places&nbsp;
         <div class="form-check">
           <input 
             class="form-check-input" 
@@ -223,8 +223,8 @@ export default {
         xArr.push(i);
       }
 
-      this.summary.push(`X_ARR${iter} = ${xArr}`);
-      this.solution.push(`X_ARR${iter} = ${xArr}`);
+      this.summary.push(`X_ARR${iter} = [${xArr}]`);
+      this.solution.push(`X_ARR${iter} = [${xArr}]`);
 
       let fxSum = 0;
       let addedArr = [];
@@ -278,9 +278,9 @@ export default {
       let upperBound = this.upperBound;
       let numPartitions = this.numPartitions;
 
-      this.estimates.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
-      this.summary.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
-      this.solution.push(`R(f(x), [a, b], Ɛ) -> R(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${this.computedErrorTolerance})`);
+      this.estimates.push(`RS(f(x), [a, b], n, m, Ɛ) -> RS(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${numPartitions}, ${methodType}, ${this.computedErrorTolerance})`);
+      this.summary.push(`RS(f(x), [a, b], n, m, Ɛ) -> RS(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${numPartitions}, ${methodType}, ${this.computedErrorTolerance})`);
+      this.solution.push(`RS(f(x), [a, b], n, m, Ɛ) -> RS(${this.toPrintEq}, [${lowerBound}, ${upperBound}], ${numPartitions}, ${methodType}, ${this.computedErrorTolerance})`);
 
       let currNumPartitions = Math.round(((numPartitions / 2) + Number.EPSILON) * (10 ** 1)) / (10 ** 1);;
       let iter = 1;
@@ -409,8 +409,8 @@ input[type=number] {
 }
 
 #methodType {
-  min-width: 88px;
-  max-width: 88px;
+  min-width: 92px;
+  max-width: 92px;
   min-height: 30px;
   max-height: 30px;
   text-align: center;
