@@ -119,9 +119,9 @@
       Method of Successive Substitution: MOSS(f(x), X0, Ɛ, maxiter)<br>
       <br>
       For: Nonlinear Equations<br>
-      Brief Description: Is one of the fastest and simplest iterative
+      Brief Description: Is one of the faster and simplest iterative
       algorithms but does not always converge<br>
-      Comparison with Other Methods: Is one of the fastest and simplest<br>
+      Comparison with Other Methods: Is one of the faster but simplest<br>
       <br>
       Legend:<br>
       xCurr = current estimate<br>

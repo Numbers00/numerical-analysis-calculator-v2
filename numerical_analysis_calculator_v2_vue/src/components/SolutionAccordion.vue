@@ -41,7 +41,7 @@
             >
             {{line.slice(0,56)}}...
             </p>
-            <p v-else :key="index.uuid">{{line.slice(0,56)}}...</p>
+            <p v-else :key="index">{{line.slice(0,56)}}...</p>
           </template>
           <template v-else>
             <p 
@@ -51,7 +51,7 @@
             >
             {{line}}
             </p>
-            <p v-else :key="index.uuid">{{line}}</p>
+            <p v-else :key="index">{{line}}</p>
           </template>
         </template>
       </div>
@@ -74,7 +74,7 @@
             >
             {{line.slice(0,56)}}...
             </p>
-            <p v-else :key="index.uuid">{{line.slice(0,56)}}...</p>
+            <p v-else :key="index">{{line.slice(0,56)}}...</p>
           </template>
           <template v-else>
             <p 
@@ -84,7 +84,7 @@
             >
             {{line}}
             </p>
-            <p v-else :key="index.uuid">{{line}}</p>
+            <p v-else :key="index">{{line}}</p>
           </template>
         </template>
       </div>
@@ -135,6 +135,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+
+#collapseFour .accordion-body {
+  text-align: left !important;
+}
 
 .accordion-item {
   border: none;

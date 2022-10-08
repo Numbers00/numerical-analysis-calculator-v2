@@ -163,7 +163,7 @@
         &emsp;if f(xCurr) === 0<br>
           &emsp;&emsp;print(xCurr + " is the exact solution")<br>
         &emsp;if |f'(xCurr)| &lt; 𝛿<br>
-          &emsp;&emsp;print(`|f'(${xCurr})| &lt; ${slopeThreshold}, the slope of the tangent line is approaching zero, try a different guess`)<br>
+          &emsp;&emsp;print(`|f'(${xCurr})| &lt; ${slopeThreshold}, the slope of the secant line is approaching zero, try a different guess`)<br>
         &emsp;iter++<br>
       until |xCurr - xPrev| &lt; Ɛ or iter &gt; maxiter<br>
     </p>
@@ -359,10 +359,10 @@ export default {
           //   this.randomizeGuess();
           //   this.handleCalculate();
           // }
-          this.estimates.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
-          this.summary.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
-          this.solution.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
-          this.answer = `|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the tangent line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`;
+          this.estimates.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the secant line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.summary.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the secant line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.solution.push(`|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the secant line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`);
+          this.answer = `|f(${xCurr}) - f(${xPrev1})| < ${slopeThreshold}, the slope of the secant line is approaching zero, X${iter} = ${xCurr} is the final estimate we've reached`;
 
           this.handleEstimates();
           return; 
