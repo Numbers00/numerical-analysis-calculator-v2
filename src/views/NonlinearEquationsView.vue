@@ -34,11 +34,6 @@
       @change-num-method="changeNumMethod"
       @handle-estimates="handleEstimates"
     />
-    <methodof-successive-substitution
-      v-if="numMethod === 'methodofSuccessiveSubstitution'"
-      @change-num-method="changeNumMethod"
-      @handle-estimates="handleEstimates"
-    />
     <mullers-method
       v-if="numMethod === 'mullersMethod'"
       @change-num-method="changeNumMethod"
