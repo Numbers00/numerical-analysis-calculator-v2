@@ -1,8 +1,17 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
-import store from './store'
+import BootstrapVueNext from 'bootstrap-vue-next'
 
-const nerdamer = require("nerdamer/all.min")
+import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
-createApp(App).use(store).use(router).mount('#app')
+import { createApp } from 'vue';
+import App from './App.vue';
+import router from './router';
+import store from './store';
+
+const app = createApp(App);
+app
+  .use(store)
+  .use(router)
+  .use(BootstrapVueNext)
+  .mount('#app');
