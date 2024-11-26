@@ -5,6 +5,8 @@
 A web application that can be used to solve numerical analysis problems.
 Note: No more calculators will be added to this application.
 
+test trigger
+
 ## Deployment
 
 This application is deployed and can be accessed at [https://numerical-analysis-calculator-v2.vercel.app/](https://numerical-analysis-calculator-v2.vercel.app/).
